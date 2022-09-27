@@ -1,4 +1,4 @@
-from disease_process_proteins import process_selector
+
 import warnings
 import sys
 from sklearn.preprocessing import binarize
@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from statistics import mean, median, stdev
 sys.path.append('../features')
-
+from disease_process_proteins import process_selector
 
 warnings.filterwarnings("ignore")
 
@@ -101,7 +101,10 @@ def threshold_classifier(df_values, df_labels, test_indices=False, op_metric='f_
             precision = TP/(TP+FP)
         else:
             precision = 0
-        recall = TP/(TP+FN)
+        if TP + FN > 0:
+            recall = TP/(TP+FN)
+        else:
+            recall = 0
         accuracy = (TP+TN)/(len(test['labels']))
 
         precision_at_20 = sum(test['labels'][:20])/20

@@ -136,3 +136,4 @@ dmypy.json
 .RData
 .RDataTmp
 .Rproj.user
+.Rda
