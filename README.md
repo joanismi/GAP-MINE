@@ -1,4 +1,4 @@
-# GENEap - Explainable Network Embeddings for Gene Functional Annotation Prediction
+# GAP-MINE - Gene Annotation Prediction using Module-based Interpretable Network Embeddings
 
 
 This project is part of the **RNA Systems Biology Lab** at [BioISI - BioSystems and Integrative Sciences Institute](https://bioisi.pt/). For other group projects, please visit our [GitHub page](https://github.com/GamaPintoLab). 
