@@ -11,10 +11,10 @@ This project is part of the **RNA Systems Biology Lab** at [BioISI - BioSystems 
 For additional information, please contact **Francisco Pinto** [frpinto@fc.ul.pt].
 
 ## About
-GENEap is an algorithm for the prediction of gene associations with diseases and cell processes.
+GAP-MINE is an algorithm for the prediction of gene associations with diseases and cell processes.
 This algorithm is composed of the following steps:
 1. Graph Construction (Biological Network);
-2. Proximity/Connectivity Metric Computation;
+2. Proximity Metric Computation;
 3. Additional Module Selection (Embedding Construction);
 4. New Association Prediction.
 
