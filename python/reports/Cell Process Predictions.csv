@@ -1,0 +1,219 @@
+ID;Name;New Predictions
+R-HSA-1214188;PRDM9 trimethylates histone H3;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-156661;Formation of Exon Junction Complex;ZC3H18
+R-HSA-176700;Incorporation Of Extended And Processed Telomere End Into Higher Order T-Loop And Associated Protein Structure;AP2M1, ASF1A, NEK4
+R-HSA-181450;Incorporation Of Extended And Processed Telomere End Into Associated Protein Structure;AP2M1, ASF1A, NEK4
+R-HSA-212222;PRC2 recruits DNA methyltransferases;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-212252;Polycomb Repressive Complex 2 (PRC2) Is recruited to chromatin;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-212263;PRC2 trimethylates histone H3 at lysine-27;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-212269;DNMT1,3A,3B:PRC2 methylates cytosine and histone H3;AP2M1, ASF1A, DAXX, DNAJC9, NASP
+R-HSA-2172678;PHF8 demethylates histone H4K20me1;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-2245218;CDK1 phosphorylates PHF8;AP2M1, ASF1A, CUL3, DNAJC9, NASP, NEK4
+R-HSA-2288097;Condensin II complex binds H4K20me1-containing nucleosomes;ACD, AP2M1, ASF1A, NEK4, POT1, TERF1, TERF2, TERF2IP, TINF2
+R-HSA-2294574;Condensin II-mediated condensation of prophase chromosomes;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-2294580;PLK1 hyperphosphorylates Condensin II complex;ACD, AP2M1, ASF1A, NEK4, POT1, TERF1, TERF2, TERF2IP, TINF2
+R-HSA-2294590;PLK1 binds phosphorylated condensin II complex;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-2294600;CDK1 phosphorylates condensin II subunit NCAPD3;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-2301205;SETD8 monomethylates histone H4;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-3222593;KDM6B demethylates H3K27me3 on p16INK4A promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-3223200;Demethylation of H3K27Me3 by KDM6B stimulates p16INK4A transcription, while binding of PRC1.4 complex to H3K27Me3 represses p16INK4A transcription;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-3229089;PRC1.4 complex binds H3K27Me3 nucleosomes on CDKN2A promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-3229102;p-MAPKAPK3 phosphorylates BMI1;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-3240295;PRC2-EZH2 trimethylates nucleosomes associated with CDKN2A promoter;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-3364026;SET1 complex trimethylates H3K4 at the MYC gene;AP2M1, ASF1A, DAXX, DNAJC9, NASP
+R-HSA-3451147;KAT5 HAT complex acetylates TCF4 gene at histone H4;AP2M1, ASF1A, NEK4, POT1, TERF1
+R-HSA-3662335;EP300 acetylates histone H2A, H2B, H3, H4;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-376419;Formation of NR-MED1 Coactivator Complex;NCOA1
+R-HSA-3769447;HDAC1:2-containing complex deacetylate histones;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-3777129;HDAC3 containing complexes deacetylate histone;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-3782637;HDAC8 deacetylates histones;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-3782655;HDAC10 deacetylates histone;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-3785711;Telomere shortening during replicative exhaustion;AP2M1, ASF1A, NEK4
+R-HSA-3788745;EHMT1:EHMT2 methylates IL8 promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-3788748;EHMT1:EHMT2 methylates IL6 promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-379048;Liganded Gq/11-activating GPCRs act as GEFs for Gq/11;ALX1
+R-HSA-380073;Liganded Gi-activating GPCR acts as a GEF for Gi;ATP12A, BUD31, CCL11, CCL26, CCL8, CXCL14, CXCL17, CYSRT1, DRD2, GJA8, MEOX2, PF4V1, TNFAIP6, UBQLN2, XCL1, XCL2
+R-HSA-382096;Formation of NR-NCOR Corepressor Complex;NCOA1
+R-HSA-427336;TTF1:rRNA promoter:ERCC6:EHMT2 complex dimethylates histone H3 at lysine-9.;AP2M1, ASF1A, DAXX, DNAJC9, H3-4, NASP, NEK4
+R-HSA-427337;MBD2 binds methylcytosine in chromatin;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-427383;CBX3 (HP1gamma) binds histone H3 dimethylated at lysine-9;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-427514;eNoSC deacetylates histone H3;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-427527;eNoSC dimethylates histone H3 at lysine-9;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-427528;Formation of energy-dependent Nucleolar Silencing Complex (eNoSC);AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-433672;NoRC:HDAC:DNMT deacetylates histone H4 and methylates histone H3;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5227490;NoRC:HDAC:DNMT methylates cytosine of the rRNA genes;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5250938;B-WICH:histone acetyltransferase acetylates histone H3 at lysine-9;AP2M1, ASF1A, DAXX, DNAJC9, H3-4, NASP, NEK4
+R-HSA-5334097;DNMT3B:DNMT3L methylates cytosine in DNA;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5334099;UHRF1 binds chromatin with hemimethylated cytosine;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5334151;DNMT1 methylates cytosine in hemimethylated DNA;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5334152;DNMT3A:DNMT3L methylates cytosine in DNA;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5334160;UHRF1:Chromatin binds DNMT1;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5334164;DNMT3B:DNMT3L binds chromatin;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5334179;DNMT3A:DNMT3L binds chromatin;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5389839;39S subunit binds 28S subunit:mRNA:fMet-tRNA;ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, HSCB, RPS8, SSBP1, YBX1
+R-HSA-5389842;TUFM hydrolyzes GTP and TUFM:GDP dissociates from 55S ribosome;ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, RPS8, SSBP1, YBX1
+R-HSA-5389848;TUFM:GTP:aminoacyl-tRNA binds 55S ribosome:mRNA:fMet-tRNA;ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, RPS8, SSBP1, YBX1
+R-HSA-5389857;Peptide transfer from P-site to A-site (peptide bond formation);ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, RPS8, SSBP1, YBX1
+R-HSA-5419261;55S ribosome with peptidyl-tRNA in A site binds GFM1:GTP;ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, RPS8, SSBP1, YBX1
+R-HSA-5419264;MTRF1L (MTRF1a) or ICT1 binds stop codon in 55S ribosome:mRNA:peptidyl-tRNA;ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, RPS8, SSBP1, YBX1
+R-HSA-5419271;55S ribosome hydrolyzes peptidyl-tRNA bond and MTRF1L hydrolyzes GTP;ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, RPS8, SSBP1, YBX1
+R-HSA-5419273;Hydrolysis of GTP and dissociation of 28S and 39S subunits;ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, HSCB, RPS8, SSBP1, YBX1
+R-HSA-5419277;GFM2:GTP binds 55S ribosome:mRNA:tRNA:MRRF releasing mRNA and tRNA;ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, HSCB, RPS8, SSBP1, YBX1
+R-HSA-5419279;Translocation of peptidyl-tRNA from A-site to P-site (and translocation of 55S ribosome by 3 bases along mRNA);ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, RPL6, RPS8, SSBP1, YBX1
+R-HSA-5419281;MRRF binds 55S ribosome:mRNA:tRNA;ALYREF, C1QBP, CAND1, CUL3, GRSF1, HNRNPA1, HNRNPU, HSCB, RPL18, RPL6, RPS8, SSBP1, YBX1
+R-HSA-5578742;AGO1,2:small RNA complexes interact with chromatin;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617431;Retinoic acid activates HOXA1 chromatin;AP2M1, ASF1A, DNAJC9, ESR1, NASP, NEK4
+R-HSA-5617445;HOXD1 chromatin is activated;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5617452;Retinoic acid activates HOXB1 chromatin;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617454;HOXB1 gene is transcribed;AP2M1, ASF1A, CUL3, DAXX, DNAJC9, ESR1, H3-4, NASP, NEK4, SDHA
+R-HSA-5617462;HOXD1 gene is transcribed;AP2M1, ASF1A, ASH2L, DAXX, DNAJC9, KDM6A, KMT2C, KMT2D, NASP, NCOA6, NEK4, PAGR1, PAXIP1, RBBP5, WDR5
+R-HSA-5617471;HOXA1 gene is transcribed;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617483;HOXA2 gene is transcribed;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5617484;EGR2 (KROX20) activates HOXA2 expression;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5617486;HOXB2 gene is transcribed;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5617492;EGR2 (KROX20) activates HOXB2 expression;AP2M1, ASF1A, DAXX, DNAJC9, HOXB1, NASP, NEK4, PKNOX1
+R-HSA-5617641;MAFB (KREISLER) and HOXB1:PBX1:PKNOX1 (HOXB1:PBX1:PREP1) activate HOXA3 expression;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5617642;HOXD3 gene is transcribed;AP2M1, ASF1A, ASH2L, DAXX, DNAJC9, KDM6A, KMT2C, KMT2D, NASP, NCOA6, NEK4, PAGR1, PAXIP1, RBBP5, WDR5
+R-HSA-5617650;HOXD3 chromatin is activated;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617661;MAFB:JUN and EGR2 activate HOXB3 expression;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617672;HOXB3 gene is transcribed;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617676;HOXA3 gene is transcribed;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5617859;Retinoic acid activates HOXB4 chromatin;AP2M1, ASF1A, DAXX, DNAJC9, ESR1, NASP, NEK4
+R-HSA-5617862;Retinoic acid activates HOXA4 chromatin;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617866;HOXC4 gene is transcribed;AP2M1, ASF1A, DAXX, DNAJC9, HOXB1, NASP, NEK4, PKNOX1
+R-HSA-5617867;HOXB4 gene is transcribed;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617874;HOXD4 gene is transcribed;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617877;HOXA4 gene is transcribed;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617887;HOXC4 chromatin is activated;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5617896;Retinoic acid activates HOXD4 chromatin;AP2M1, ASF1A, CUL3, DAXX, DNAJC9, ESR1, H3-4, NASP, NEK4
+R-HSA-5621002;HOXB1 activates HOXB2 expression;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5621010;HOXB1 activates HOXA2 expression;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5625774;PKN1:AR complex binds promoters of KLK2 and KLK3 genes;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5625784;PKN1 phosphorylates histone 3 of nucleosomes associate with KLK2 and KLK3 promoters;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5625796;Demethylase KDM4C binds KLK2 and KLK3 promoters;AP2M1, ASF1A, DAXX, DNAJC9, HIF1A, NASP, NEK4
+R-HSA-5625797;KDM4C demethylates Me3K-10-H3 associated with KLK2 and KLK3 promoters;AP2M1, ASF1A, DAXX, DNAJC9, HIF1A, NASP, NEK4
+R-HSA-5625848;KDM1A demethylates dimethylated H3K9 (Me2K-10-H3) at KLK2 and KLK3 promoters;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5625849;Demethylase KDM1A binds KLK2 and KLK3 promoters;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5625870;KDM1A demethylates monomethylated H3K9 (MeK-10-H3) at KLK2 and KLK3 promoters;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-5625883;PKN1 in complex with AR positively regulates expression of KLK2 and KLK3;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-5626220;C2CD3 binds the mother centriole;CEP164
+R-HSA-5626223;C2CD3 and OFD1 recruit 5 distal appendage proteins to the centriole;CEP128
+R-HSA-5626228;The distal appendage proteins recruit TTBK2;CEP128
+R-HSA-5626699;MARK4 binds ODF2 in the centriole;CEP128
+R-HSA-5638009;CEP164 recruits RAB3IP-carrying Golgi-derived vesicles to the basal body;CEP128
+R-HSA-5682858;RNF8 and RNF168 ubiquitinate H2AFX;AP2M1, ASF1A
+R-HSA-5683077;RNF8 and RNF168 ubiquitinate KDM4A,B;AP2M1, ASF1A
+R-HSA-5683384;UIMC1 and FAM175A bind DNA DSBs;AP2M1, ASF1A, BABAM1, BABAM2, BARD1, BRCA1, BRCC3
+R-HSA-5683385;Formation of BRCA1-A complex at DNA DSBs;AP2M1, ASF1A
+R-HSA-5683735;CHEK2 is recruited to DNA DSBs;AP2M1, ASF1A
+R-HSA-5683801;CHEK2 phosphorylates BRCA1;AP2M1, ASF1A
+R-HSA-5684052;PIAS4 SUMOylates MDC1;AP2M1, ASF1A
+R-HSA-5684071;RNF4 ubiquitinates MDC1;AP2M1, ASF1A
+R-HSA-5686685;RIF1 and PAX1IP bind TP53BP1 at DNA DSBs;AP2M1, ASF1A
+R-HSA-5686704;Activated ATM phosphorylates DCLRE1C;ABRAXAS1, AP2M1, ASF1A, BABAM1, BABAM2, BARD1, BRCA1, BRCC3, UIMC1
+R-HSA-5686900;TP53BP1 recruits DCLRE1C to ATM;AP2M1, ASF1A
+R-HSA-5693551;Phosphorylation of BRCA1-A complex at multiple sites by ATM;AP2M1, ASF1A
+R-HSA-5693599;Association of Ku heterodimer with ends of DNA double-strand break;AP2M1, ASF1A
+R-HSA-5693644;HOXB1 maintains activation of HOXB1 chromatin;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-606287;RSF complex binds the centromere;AP2M1, ASF1A, H3C12, NEK4
+R-HSA-606289;New CENPA-containing nucleosomes are deposited at the centromere;AP2M1, ASF1A, NEK4
+R-HSA-6798748;Exocytosis of secretory granule lumen proteins;IQCB1
+R-HSA-6798751;Exocytosis of azurophil granule lumen proteins;UBQLN2
+R-HSA-6799179;Peripheral arm subunits bind the 815kDa complex to form a 980kDa complex;HSCB
+R-HSA-6799196;The MCIA complex, NDUFAF2-7 all dissociate from the 980kDa complex, resulting in Complex I;HSCB
+R-HSA-6802932;Dissociation of BRAF/RAF fusion complex;KDM6B
+R-HSA-6810139;HOXA2 chromatin is activated;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-6810158;HOXB3 chromatin is activated;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-6810159;HOXB2 chromatin is activated;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-6810161;HOXA3 chromatin is activated;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-69891;Phosphorylation and activation of CHEK2 by ATM;AP2M1, ASF1A
+R-HSA-73718;UBF-1 Binds rDNA Promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-749448;Liganded Gq-activating GPCRs bind inactive heterotrimeric Gq;ADRB2, ALX1, TMBIM1
+R-HSA-749452;The Ligand:GPCR:Gq complex dissociates;ADRB2, ALX1, UBQLN2
+R-HSA-749454;The Ligand:GPCR:Gi complex dissociates;ATP12A, BUD31, CCL11, CCL26, CCL8, CXCL14, CXCL17, CYSRT1, GJA8, PF4V1, UBQLN2, XCL1, XCL2
+R-HSA-749456;Liganded Gi-activating GPCRs bind inactive heterotrimeric G-protein Gi;ATP12A, BUD31, CCL11, CCL26, CCL8, CXCL14, CXCL17, GJA8, PF4V1, XCL1, XCL2
+R-HSA-74986;Elongation of pre-rRNA transcript;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8865491;RUNX1:CBFB:KMT2A binds SPI1 (PU.1) gene;AP2M1, ASF1A, ASH2L, DNAJC9, DPY30, EP300, GATA1, KAT2B, KMT2B, KMT2C, KMT2D, KMT2E, NASP, PRMT1, RBBP5, SETD1A, SETD1B, WDR5, ZFPM1
+R-HSA-8865498;KMT2A trimethylates nucleosomes at the SPI1 gene locus producing H3K4Me3 mark;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-8865505;SPI1 (PU.1) gene transcription is stimulated by RUNX1:CBFB:KMT2A;AP2M1, ASF1A, DAXX, DNAJC9, HDAC1, NASP, NEK4, PRMT6, SIN3A, SIN3B
+R-HSA-8867754;F- and N- BAR domain proteins bind the clathrin-coated pit;SRPK2, SYNCRIP
+R-HSA-8867756;CLASP proteins and cargo are recruited to the nascent clathrin-coated pit;SRPK2, SYNCRIP
+R-HSA-8868071;Clathrin recruits PIK3C2A;SRPK2, SYNCRIP
+R-HSA-8868072;Clathrin-associated PIK3C2A phosphorylates PI(4)P to PI(3,4)P2;SRPK2, SYNCRIP
+R-HSA-8868230;SNX9 recruits components of the actin polymerizing machinery;SRPK2, SYNCRIP
+R-HSA-8868236;BAR domain proteins recruit dynamin;SRPK2, SYNCRIP
+R-HSA-8868648;SYNJ hydrolyze PI(4,5)P2 to PI(4)P;SRPK2, SYNCRIP
+R-HSA-8868651;Endophilins recruit synaptojanins to the clathrin-coated pit;SYNCRIP
+R-HSA-8868658;HSPA8-mediated ATP hydrolysis promotes vesicle uncoating;SRPK2, SYNCRIP
+R-HSA-8868659;Clathrin recruits auxilins to the clathrin-coated vesicle;SRPK2, SYNCRIP
+R-HSA-8868660;Auxilin recruits HSPA8:ATP to the clathrin-coated vesicle;SRPK2, SYNCRIP
+R-HSA-8868661;Dynamin-mediated GTP hydrolysis promotes vesicle scission;SRPK2, SYNCRIP
+R-HSA-8869438;Dissociation of clathrin-associated proteins;SRPK2, SYNCRIP
+R-HSA-8870466;RGGT:CHM binds RABs;GDI1, RABIF
+R-HSA-8870469;RGGT geranylgeranylates RAB proteins;GDI1, RABIF
+R-HSA-8871193;Dissociation of AAK1 and dephosphorylation of AP-2 mu2;APP, HTT, SRPK2, SYNCRIP, VCAM1
+R-HSA-8871194;RAB5 and GAPVD1 bind AP-2;SRPK2, SYNCRIP
+R-HSA-8935730;RUNX1:CBFB, SIN3A(SIN3B), PRMT6 and HDAC1 bind the ITGA2B promoter;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-8935731;ITGA2B gene transcription is stimulated by the complex of RUNX1, GATA1 and PRMT1 and inhibited by the complex of RUNX1, SIN3A and PRMT6;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8935740;RUNX1 and GATA1 bind the promoter of the ITGA2B gene;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8936481;Core MLL complex methylates H3K4Me2-Nucleosome at the ITGA2B gene promoter;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-8936584;PRMT6 arginine methylates H3K4me2-Nucleosome at the ITGA2B gene promoter;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-8936599;RUNX1:CBFB, SIN3A(SIN3B), PRMT6 and HDAC1 bind the GP1BA promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8936608;PRMT6 arginine methylates H3K4me2-Nucleosome at the GP1BA gene promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8936616;RUNX1 and GATA1 bind the promoter of the GP1BA gene;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8936621;Core MLL complex methylates H3K4Me2-Nucleosome at the GP1BA gene promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP
+R-HSA-8936628;GP1BA gene transcription is stimulated by the complex containing RUNX1, PRMT1 and GATA1 and inhibited by the complex of RUNX1, SIN3A and PRMT6;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8936979;RUNX1 and GATA1 bind the promoter of the THBS1 gene;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-8936989;RUNX1:CBFB, SIN3A(SIN3B), PRMT6 and HDAC1 bind the THBS1 gene promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8936995;THBS1 gene transcription is stimulated by the complex containing RUNX1, PRMT1 and GATA1 and inhibited by the complex of RUNX1, SIN3A and PRMT6;AP2M1, ASF1A, DAXX, DNAJC9, H3-4, NASP, NEK4
+R-HSA-8937016;Core MLL complex methylates H3K4Me2-Nucleosome at the THBS1 gene promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8937022;PRMT6 arginine methylates H3K4me2-Nucleosome at the THBS1 gene promoter;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-8937037;RUNX1 and GATA1 bind the promoter of the MIR27A gene;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-8937050;Core MLL complex methylates H3K4Me2-Nucleosome at the MIR27A gene promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8937097;MIR27A gene transcription is stimulated by the complex containing RUNX1, PRMT1 and GATA1 and inhibited by the complex of RUNX1, SIN3A and PRMT6;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-8937113;PRMT6 arginine methylates H3K4me2-Nucleosome at the MIR27A gene promoter;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-8937118;RUNX1:CBFB, SIN3A(SIN3B), PRMT6 and HDAC1 bind the MIR27A gene promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-8940388;GPLD1 hydrolyses GPI-anchors from proteins;IZUMO1, KLRK1
+R-HSA-8952618;AcM-UBE2M transfers NEDD8 to CRL1 E3 ubiquitin ligase complex;IL22RA1
+R-HSA-8952620;NEDD8:AcM-UBE2M binds CRL1 E3 ubiquitin ligase complex;IL22RA1
+R-HSA-8955241;CAND1 binds cytosolic CRL E3 ubiquitin ligases;IL22RA1
+R-HSA-8955289;COMMDs displace CAND1 from cytosolic CRL E3 ubiquitin ligase complexes;IL22RA1
+R-HSA-8956040;COP9 signalosome deneddylates cytosolic CRL E3 ubiquitin ligase complexes;HSP90AB1, IL22RA1
+R-HSA-8956200;MyrG-DCUN1D3 binds CRL1 E3 ubiquitin ligase complex;IL22RA1
+R-HSA-9009065;FOXA1 and GATA3 bind to CCND1 promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-9009371;Binding of AP1 transcriptional activator complexes to CCND1 promoter;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-9009378;Estrogen-responsive CCND1 gene expression;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-9011949;KDM4B demethylates H3K9me3 on estrogen-responsive target enhancers;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-9011950;Estrogen-responsive GREB1 gene transcription;AP2M1, ASF1A, DAXX, DNAJC9, H3-4, NASP, NEK4
+R-HSA-9011952;ESR1:ESTG and KDM4B bind H3K9me3 target gene enhancers;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-9011966;Estrogen-responsive KDM4B gene expression;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-9011975;Estrogen-responsive MYC gene expression;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-9011983;Overexpressed HIST1H2AC and ESR1:ESTG bind MYC and BCL2 genes;AP2M1, ASF1A, DAXX, DNAJC9, NASP, NEK4
+R-HSA-9012000;NR5A2, ZNF217 and NCOA3 bind GREB1 promoter;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-9013145;RAC1 binds effectors at the plasma membrane;CYBC1, NCK2
+R-HSA-9018808;RAC3 binds effectors at the plasma membrane;CYBC1
+R-HSA-912408;Telomeres cluster at the nuclear membrane;AP2M1, ASF1A, NEK4
+R-HSA-9604829;SIRT6 deacetylates histones at NOTCH1 and NOTCH4 gene promoters;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-9604831;NOTCH1 and NOTCH4 gene transcription is inhibited by SIRT6;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-9604834;SIRT6 binds to acetylated histones at NOTCH1 and NOTCH4 gene promoters;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-9614810;Activation of Latent HCMV Genome;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-9614811;Transcriptional Activation of the HCMV Genome;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-9614816;Latent Transcriptinally Repressed HCMV Genome;AP2M1, ASF1A, DNAJC9, NASP, NEK4
+R-HSA-9621073;Immediate Early (IE) Gene Expression;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-9623096;Delayed Early (DE) Gene Expression;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-9629195;NEIL3 recognizes and binds to 5-guanidinohydantoin (Gh) in telomeric DNA;AP2M1, ASF1A, NEK4
+R-HSA-9629216;NEIL3 cleaves 5-guanidinohydantoin (Gh) from damaged telomeric DNA;AP2M1, ASF1A, NEK4
+R-HSA-9629372;NEIL3 recognizes and binds to thymine glycol in telomeric DNA;AP2M1, ASF1A, NEK4
+R-HSA-9629373;NEIL3 recognizes and binds to spiroiminodihydantoin in telomeric DNA;AP2M1, ASF1A, NEK4
+R-HSA-9629483;NEIL3 cleaves spiroiminodihydantoin from damaged telomeric DNA;AP2M1, ASF1A, NEK4
+R-HSA-9629497;NEIL3 cleaves thymine glycol from telomeric DNA;AP2M1, ASF1A, NEK4
+R-HSA-9670101;ATRX:DAXX binds to subtelomeric chromosomal regions;AP2M1, ASF1A, NEK4
+R-HSA-9670114;Histone H3.3 deposition at telomere;AP2M1, ASF1A, NEK4
+R-HSA-9670149;TERRA transcription;AP2M1, ASF1A, NEK4
+R-HSA-9698928;Late (L) Gene Expression;AP2M1, ASF1A, DNAJC9, NASP
+R-HSA-9710490;The GSDME gene promoter is hypermethylated;AP2M1, ASF1A, DAXX, DNAJC9, NASP
+R-HSA-977224;Serum amyloid P binds DNA and chromatin;AP2M1, ASF1A, DAXX, DNAJC9, H2AZ2, NASP, NEK4
+R-HSA-983140;Transfer of Ub from E2 to substrate and release of E2;DISC1, HSP90AB1, IL22RA1, POTEF, UBA1
+R-HSA-983147;Release of E3 from polyubiquitinated substrate;DISC1, HIF1AN, HSP90AB1, IL22RA1, POTEF
+R-HSA-983156;Polyubiquitination of substrate;DISC1, HSP90AB1, IL22RA1, UBA1
+R-HSA-983157;Interaction of E3 with substrate and E2-Ub complex;DISC1, HSP90AB1, IL22RA1
