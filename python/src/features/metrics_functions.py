@@ -324,3 +324,52 @@ def multiple_metrics(ppis, process_df):
         fraction_betweenness_scores, keys=df_keys, axis=0).reset_index(level=1)
     rwr_df = pd.concat(rwr_scores, keys=df_keys, axis=0).reset_index(level=1)
     return hyper_scores_df, closeness_df, betweenness_df, rwr_df, fraction_betweenness_df
+
+def MaxLink(labels, adj):
+    proteins = labels.index
+    labels.reset_index(inplace=True, drop=True)
+    maxlink = {}
+    for module_name in tqdm(labels.columns):
+        maxlink[module_name] = []
+        module = labels[labels[module_name]==1].index.values
+        protein_degree_module = np.sum(adj[:,module], axis=1)
+        protein_degree = np.sum(adj, axis=1)
+        for i in range(len(protein_degree)):
+            connectivity = hypergeom.pmf(protein_degree_module[i], adj.shape[0], len(module), protein_degree[i])
+            if connectivity >= 0.5:
+                maxlink[module_name].append(0)
+            else:
+                maxlink[module_name].append(protein_degree_module[i])
+    maxlink_df = pd.DataFrame.from_dict(maxlink)
+    return maxlink_df
+
+
+def genePANDA(graph, labels, sp, weight_adj=np.zeros((2,2))):
+    print('Running...')
+    proteins = graph.vs['name']
+    average_distance = np.sum(sp, axis=1)/len(graph.vs['name'])
+    average_distance_sqrt = np.sqrt(np.dot(average_distance[:,None],average_distance[None,:]))
+    if weight_adj.shape != (2,2):
+        sp = np.divide(sp,weight_adj)
+    raw_distance = np.divide(sp, average_distance_sqrt)
+    labels.reset_index(drop=True, inplace=True)
+    genePANDA_proba = {}
+    for module_name in tqdm(labels.columns):
+        module = labels[labels[module_name]==1].index.values
+        module_distance = raw_distance[:,module]
+        weights = (np.sum(raw_distance, axis=1)/len(graph.vs['name'])) - (np.sum(module_distance, axis=1)/len(module))
+        weights_labels_df = pd.DataFrame(labels[module_name])
+        weights_labels_df['weights'] = weights
+        weights_labels_df.sort_values(by='weights', inplace=True, ascending=False)
+        weights_labels_df.reset_index(inplace=True)
+        weights_labels_df.columns = ['true_index', 'label', 'weight']
+        weights_labels_df.reset_index(inplace=True)
+        weights_labels_df.set_index('true_index', inplace=True)
+        weights_labels_df['P'] = weights_labels_df.apply(lambda row: row['index']+1, axis=1)
+        weights_labels_df['TP'] = np.cumsum(weights_labels_df['label'])
+        weights_labels_df['probability'] = weights_labels_df['TP']/weights_labels_df['P']
+        weights_labels_df.sort_index(inplace=True)
+        genePANDA_proba[module_name] = weights_labels_df['probability'].values
+    genePANDA_df = pd.DataFrame.from_dict(genePANDA_proba, orient='columns')    
+    genePANDA_df.index = graph.vs['name']
+    return genePANDA_df
