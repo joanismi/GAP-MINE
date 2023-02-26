@@ -39,6 +39,23 @@ oplsda.fs <- function(metrics, labels){
   fs
 }
 
+test_index <- function(metrics, labels){
+  myCluster <- makeCluster(12, # number of cores to use
+                           type = "PSOCK") # type of cluster
+  registerDoParallel(myCluster)
+  fs <- foreach(column = 1:ncol(labels), .combine = 'rbind') %dopar% {
+    library(ropls)
+    library(caret)
+    column_labels <- factor(labels[,column], levels=c(1,0))
+    train.index <- unlist(createDataPartition(column_labels, p = .8, list = TRUE))
+    all_labels  <- seq(1, nrow(labels))
+    test.index <- setdiff(all_labels, train.index)
+    return(list(as.vector(test.index)))
+  }
+  stopCluster(myCluster)
+  fs
+}
+
 
 oplsda.fs.multiple <- function(metrics, labels){
   results <- list()
@@ -128,6 +145,9 @@ closeness_fp <- read.csv('../python/data/processed/metrics/process_closeness_fp.
 betweenness_fp <- read.csv('../python/data/processed/metrics/process_betweenness_fp.csv', row.names = 1)
 fraction_betweenness_fp <- read.csv('../python/data/processed/metrics/process_fraction_betweenness_fp.csv', row.names = 1)
 rwr_fp <- read.csv('../python/data/processed/metrics/process_rwr_fp.csv', row.names = 1)
+maxlink_fp <- read.csv('../python/data/processed/metrics/process_maxlink_fp.csv', row.names = 1)
+genepanda_fp <- read.csv('../python/data/processed/metrics/process_genepanda_fp.csv', row.names = 1)
+
 
 row.names(reactome_labels_fp) <- row.names(hypergeometric_fp)
 colnames(reactome_labels_fp) <- colnames(hypergeometric_fp)
@@ -169,6 +189,9 @@ disease_closeness_fp <- read.csv('../python/data/processed/metrics/disease_close
 disease_betweenness_fp <- read.csv('../python/data/processed/metrics/disease_betweenness_fp.csv', row.names = 1)
 disease_fraction_betweenness_fp <- read.csv('../python/data/processed/metrics/disease_fraction_betweenness_fp.csv', row.names = 1)
 disease_rwr_fp <- read.csv('../python/data/processed/metrics/disease_rwr_fp.csv', row.names = 1)
+disease_maxlink_fp <- read.csv('../python/data/processed/metrics/disease_maxlink_fp.csv', row.names = 1)
+disease_genepanda_fp <- read.csv('../python/data/processed/metrics/disease_genepanda_fp.csv', row.names = 1)
+
 
 row.names(disgenet_labels_fp) <- row.names(disease_hypergeometric_fp)
 colnames(disgenet_labels_fp) <- colnames(disease_hypergeometric_fp)
@@ -205,6 +228,9 @@ disease_closeness_conservative_fp <- read.csv('../python/data/processed/metrics/
 disease_betweenness_conservative_fp <- read.csv('../python/data/processed/metrics/disease_betweenness_conservative_fp.csv', row.names = 1)
 disease_fraction_betweenness_conservative_fp <- read.csv('../python/data/processed/metrics/disease_fraction_betweenness_conservative_fp.csv', row.names = 1)
 disease_rwr_conservative_fp <- read.csv('../python/data/processed/metrics/disease_rwr_conservative_fp.csv', row.names = 1)
+disease_genepanda_conservative_fp <- read.csv('../python/data/processed/metrics/disease_genepanda_conservative_fp.csv', row.names = 1)
+disease_maxlink_conservative_fp <- read.csv('../python/data/processed/metrics/disease_conservative_maxlink_fp.csv', row.names = 1)
+
 
 row.names(disgenet_labels_conservative_fp) <- row.names(disease_hypergeometric_conservative_fp)
 colnames(disgenet_labels_conservative_fp) <- colnames(disease_hypergeometric_conservative_fp)
@@ -264,6 +290,11 @@ rwr_fs_fp <- oplsda.fs(rwr_fp, reactome_labels_fp)
 write.csv(as.data.frame(rwr_fs_fp[,1]),"../python/data/processed/fs/reactome_rwr_fs_fp.csv", row.names = FALSE)
 write.csv(as.data.frame(rwr_fs_fp[,2]),"../python/data/processed/fs/reactome_rwr_test_fp.csv", row.names = FALSE)
 
+maxlink_fs_fp <- test_index(maxlink_fp, reactome_labels_fp)
+write.csv(as.data.frame(maxlink_fs_fp[,1]),"../python/data/processed/fs/reactome_maxlink_test_fp.csv", row.names = FALSE)
+
+genepanda_fs_fp <- test_index(genepanda_fp, reactome_labels_fp)
+write.csv(as.data.frame(genepanda_fs_fp[,1]),"../python/data/processed/fs/reactome_genepanda_test_fp.csv", row.names = FALSE)
 
 hyper_80_fs <- oplsda.fs.multiple(hypergeometric_80, reactome_labels)
 write.csv(as.data.frame(hyper_80_fs[[1]]),"../python/data/processed/fs/reactome_hyper_80_fs_apid_huri.csv", row.names = FALSE)
@@ -347,6 +378,7 @@ write.csv(as.data.frame(disease_rwr_fs[,1]),"../python/data/processed/fs/disease
 write.csv(as.data.frame(disease_rwr_fs[,2]),"../python/data/processed/fs/disease/disease_rwr_test_apid_huri.csv", row.names = FALSE)
 
 
+
 disease_hypergeometric_fs_fp <- oplsda.fs(disease_hypergeometric_fp, disgenet_labels_fp)
 write.csv(as.data.frame(disease_hypergeometric_fs_fp[,1]),"../python/data/processed/fs/disease_hypergeometric_fs_fp.csv", row.names = FALSE)
 write.csv(as.data.frame(disease_hypergeometric_fs_fp[,2]),"../python/data/processed/fs/disease_hypergeometric_test_fp.csv", row.names = FALSE)
@@ -366,6 +398,13 @@ write.csv(as.data.frame(disease_fraction_betweenness_fs_fp[,2]),"../python/data/
 disease_rwr_fs_fp <- oplsda.fs(disease_rwr_fp, disgenet_labels_fp)
 write.csv(as.data.frame(disease_rwr_fs_fp[,1]),"../python/data/processed/fs/disease/disease_rwr_fs_fp.csv", row.names = FALSE)
 write.csv(as.data.frame(disease_rwr_fs_fp[,2]),"../python/data/processed/fs/disease/disease_rwr_test_fp.csv", row.names = FALSE)
+
+disease_maxlink_fs_fp <- test_index(disease_maxlink_fp, disgenet_labels_fp)
+write.csv(as.data.frame(disease_maxlink_fs_fp[,1]),"../python/data/processed/fs/disease/disease_maxlink_test_fp.csv", row.names = FALSE)
+
+disease_genepanda_fs_fp <- test_index(disease_genepanda_fp, disgenet_labels_fp)
+write.csv(as.data.frame(disease_genepanda_fs_fp[,1]),"../python/data/processed/fs/disease/disease_genepanda_test_fp.csv", row.names = FALSE)
+
 
 disease_hyper_ppi80_fs <- oplsda.fs.multiple(disease_hypergeometric_ppi80, disgenet_labels)
 write.csv(as.data.frame(disease_hyper_ppi80_fs[[1]]),"../python/data/processed/fs/disease/disgenet_hyper_ppi80_fs_apid_huri.csv", row.names = FALSE)
@@ -450,6 +489,12 @@ write.csv(as.data.frame(disease_fraction_betweenness_fs_conservative_fp[,2]),"..
 disease_rwr_fs_conservative_fp <- oplsda.fs(disease_rwr_conservative_fp, disgenet_labels_conservative_fp)
 write.csv(as.data.frame(disease_rwr_fs_conservative_fp[,1]),"../python/data/processed/fs/disease/disease_rwr_fs_conservative_fp.csv", row.names = FALSE)
 write.csv(as.data.frame(disease_rwr_fs_conservative_fp[,2]),"../python/data/processed/fs/disease/disease_rwr_test_conservative_fp.csv", row.names = FALSE)
+
+disease_maxlink_fs_conservative_fp <- test_index(disease_maxlink_conservative_fp, disgenet_labels_conservative_fp)
+write.csv(as.data.frame(disease_maxlink_fs_conservative_fp[,1]),"../python/data/processed/fs/disease/disease_maxlink_test_conservative_fp.csv", row.names = FALSE)
+
+disease_genepanda_fs_conservative_fp <- test_index(disease_genepanda_fs_conservative_fp, disgenet_labels_conservative_fp)
+write.csv(as.data.frame(disease_genepanda_fs_conservative_fp[,1]),"../python/data/processed/fs/disease/disease_genepanda_test_conservative_fp.csv", row.names = FALSE)
 
 disease_hyper_ppi80_fs_conservative <- oplsda.fs.multiple(disease_hypergeometric_ppi80_conservative, disgenet_labels_conservative)
 write.csv(as.data.frame(disease_hyper_ppi80_fs_conservative[[1]]),"../python/data/processed/fs/disease/disgenet_hyper_ppi80_fs_conservative_apid_huri.csv", row.names = FALSE)
