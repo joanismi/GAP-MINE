@@ -3,13 +3,12 @@ import warnings
 import sys
 from sklearn.preprocessing import binarize
 from sklearn.exceptions import FitFailedWarning, ConvergenceWarning
-from sklearn.utils._testing import ignore_warnings
+#from sklearn.utils._testing import ignore_warnings
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import HalvingGridSearchCV
-from sklearn.metrics import confusion_matrix, precision_score, f1_score, recall_score, make_scorer, f1_score, matthews_corrcoef
+from sklearn.metrics import confusion_matrix, precision_score, f1_score, recall_score, f1_score, matthews_corrcoef, precision_recall_curve, auc, make_scorer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
-from tqdm import tqdm_notebook
 from tqdm.notebook import tqdm
 import numpy as np
 import pandas as pd
@@ -32,16 +31,17 @@ def threshold_classifier(df_values, df_labels, test_indices=False, op_metric='f_
     # RETURNS: dataframe with a collection of evaluation metrics.
 
     classifier_results = {'tp': [], 'fp': [], 'fn': [], 'tn': [], 'precision': [], 'recall': [
-    ], 'f_measure': [], 'mcc': [], 'precision@15': [], 'precision@20': [], 'precision@n_positives': []}
+    ], 'f_measure': [], 'mcc': [], 'precision@15': [], 'precision@20': [], 'precision@k_random': [], 'auprc_random': [],}
 
-    for i in tqdm_notebook(range(df_values.shape[1])):
+    for i in tqdm(range(df_values.shape[1])):
+    
         process = df_values.columns[i]
         value_labels = pd.concat([pd.DataFrame(df_values[process]), pd.DataFrame(
             df_labels[process])], axis=1, names=['values', 'labels'])
         value_labels.columns = ['values', 'labels']
         test_indices = test_indices
 
-        test_indices_ = test_indices[i][test_indices[i] < 18000]
+        test_indices_ = test_indices[i][test_indices[i] < 20000]
         train_indices_ = list(
             set(range(0, len(value_labels))) - set(test_indices_))
         train = value_labels.iloc[train_indices_]
@@ -110,6 +110,11 @@ def threshold_classifier(df_values, df_labels, test_indices=False, op_metric='f_
         precision_at_20 = sum(test['labels'][:20])/20
         precision_at_15 = sum(test['labels'][:15])/15
         precision_at_20p = sum(test['labels'][:tot_pos])/tot_pos
+        
+
+        precision_scores, recall_scores, thresholds_pr  = precision_recall_curve(test['labels'], test['values'])
+        auprc = auc(recall_scores, precision_scores)
+        random_precision = (TP+FN)/(TP+FP+TN+FN)
         try:
             mcc = (TP*TN-FP*FN)/(((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))**0.5)
         except ZeroDivisionError:
@@ -130,7 +135,8 @@ def threshold_classifier(df_values, df_labels, test_indices=False, op_metric='f_
         classifier_results['tn'].append(TN)
         classifier_results['precision@15'].append(precision_at_15)
         classifier_results['precision@20'].append(precision_at_20)
-        classifier_results['precision@n_positives'].append(precision_at_20p)
+        classifier_results['precision@k_random'].append(precision_at_20p/random_precision)
+        classifier_results['auprc_random'].append(auprc/random_precision)
     results = pd.DataFrame(classifier_results)
     return results
 
@@ -173,7 +179,7 @@ def threshold_classifier_fp(df_values, df_labels, test_indices=False, op_metric=
     classifier_results = {'tp': [], 'fp': [], 'fn': [], 'tn': [], 'precision': [], 'recall': [], 'f_measure': [
     ], 'mcc': [], 'precision@15': [], 'precision@20': [], 'precision@n_positives': [], 'tp_proteins': [], 'fp_proteins': [], 'fn_proteins': []}
 
-    for i in tqdm_notebook(range(df_values.shape[1])):
+    for i in tqdm(range(df_values.shape[1])):
         process = df_values.columns[i]
         value_labels = pd.concat([pd.DataFrame(df_values[process]), pd.DataFrame(
             df_labels[process])], axis=1, names=['values', 'labels'])
@@ -275,6 +281,7 @@ def threshold_classifier_fp(df_values, df_labels, test_indices=False, op_metric=
     results = pd.DataFrame(classifier_results)
     return results
 
+from sklearn.exceptions import ConvergenceWarning
 
 def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels, jobs=20):
     # GENEap algorithm for protein-process and protein-disease association prediction by implementing a machine learning model.
@@ -292,137 +299,17 @@ def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels,
     #   - nº of cores.
     #
     # RETURNS: dataframe with a collection of performance metrics, dataframe with a collection of performance metrics given probability prediction, dataframe with cv results and number of processes/diseases chosen in the best model.
+    #warnings.filterwarnings("ignore")
+    #warnings.filterwarnings("always")
+    #warnings.warn("once")
 
-    warnings.filterwarnings("ignore")
-    classifier_results = {'tp': [], 'fp': [], 'fn': [], 'tn': [
-    ], 'precision': [], 'recall': [], 'f_measure': [], 'mcc': []}
+    classifier_results = {'tp': [], 'fp': [], 'fn': [], 'tn': [], 'precision': [], 'recall': [], 'f_measure': [], 'mcc': []}
     classifier_results_proba = {'tp': [], 'fp': [], 'fn': [], 'tn': [], 'precision': [], 'recall': [], 'f_measure': [
-    ], 'mcc': [], 'precision@15': [], 'precision@20': [], 'precision@n_positives': [], 'threshold': []}
-    cv_results = []
-    n_fs = []
-
-    for i in tqdm_notebook(range(len(data_))):
-        clf = None
-        mean_f_measure = 0
-        std_f_measure = 0
-        for method in ['10', 'middle', 'outlier10']:
-            data_fs_ = process_selector(data_fs, i, method)
-            data = data_[tuple([data_fs_[0]])]
-            test_indices = test_indices_[i][test_indices_[i] < 18000]
-            train_indices = [x for x in range(
-                0, len(data[0])) if x not in test_indices]
-            X_test = data[:, test_indices].transpose()
-            y_test = labels.iloc[test_indices, i]
-            X_train = data[:, train_indices].transpose()
-            y_train = labels.iloc[train_indices, i]
-            clf = HalvingGridSearchCV(model, params, scoring='f1', n_jobs=jobs,
-                                      cv=10, error_score=0.0, verbose=0)
-
-            clf.fit(X_train, y_train)
-            cv_results_df = pd.DataFrame(clf.cv_results_)
-            if cv_results_df[cv_results_df['iter'] == 4]['mean_test_score'].max() >= mean_f_measure:
-                mean_f_measure = cv_results_df[cv_results_df['iter'] == 4]['mean_test_score'].max(
-                )
-                std_f_measure = cv_results_df[(cv_results_df['iter'] == 4) & (
-                    cv_results_df['mean_test_score'] == mean_f_measure)]['std_test_score'].values[0]
-                best_clf = clf
-                X_test_best = X_test
-                X_train_best = X_train
-                y_test_best = y_test
-                best_n = data_fs_.shape[1]
-
-        cv_results.append((mean_f_measure, std_f_measure))
-        n_fs.append(best_n)
-        y_pred = best_clf.predict(X_test_best)
-        y_train_pred = best_clf.predict_proba(X_train_best)[:, 1]
-        y_pred_proba = best_clf.predict_proba(X_test_best)[:, 1]
-        tn, fp, fn, tp = confusion_matrix(y_test_best, y_pred).ravel()
-
-        classifier_results['f_measure'].append(
-            f1_score(y_test_best, y_pred, zero_division=0))
-        classifier_results['precision'].append(
-            precision_score(y_test_best, y_pred))
-        classifier_results['recall'].append(recall_score(y_test_best, y_pred))
-        classifier_results['mcc'].append(
-            matthews_corrcoef(y_test_best, y_pred))
-        classifier_results['tp'].append(tp)
-        classifier_results['fp'].append(fp)
-        classifier_results['fn'].append(fn)
-        classifier_results['tn'].append(tn)
-
-        value_labels = pd.DataFrame({'value': y_train_pred, 'label': y_train})
-        value_labels.sort_values(by=['value'], ascending=False, inplace=True)
-        tot_pos = sum(value_labels['label'])
-        ord_labels = np.array(value_labels['label'].values)
-        tot_labels = len(ord_labels)
-        TP = np.cumsum(ord_labels)
-        FP = np.array(range(1, tot_labels+1)) - TP
-        FN = tot_pos-TP
-        TN = tot_labels-FP-TP-FN
-        mcc = (TP*TN-FP*FN)/(((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))**0.5)
-        mcc = np.where(np.isinf(mcc), -np.Inf, mcc)
-        precision = TP/(TP+FP)
-        recall = TP/(TP+FN)
-        f_measure = 2*((precision*recall)/(precision+recall))
-        best_result_index = np.nanargmax(f_measure)
-        threshold = value_labels['value'].values[best_result_index]
-
-        value_labels = pd.DataFrame({'value': y_pred_proba, 'label': y_test})
-        value_labels.sort_values(by=['value'], ascending=False, inplace=True)
-        tot_pos = sum(value_labels['label'])
-        tot_labels = len(value_labels['label'])
-        TP = sum(value_labels[value_labels['value'] >= threshold]['label'])
-        FP = len(value_labels[value_labels['value']
-                 >= threshold]['label']) - TP
-        FN = tot_pos-TP
-        TN = tot_labels-FP-TP-FN
-        precision_at_20 = sum(value_labels['label'][:20])/20
-        precision_at_15 = sum(value_labels['label'][:15])/15
-        precision_at_20p = sum(
-            value_labels['label'][:int(tot_pos)])/int(tot_pos)
-        try:
-            mcc = (TP*TN-FP*FN)/(((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))**0.5)
-        except ZeroDivisionError:
-            mcc = 0
-        try:
-            precision = TP/(TP+FP)
-        except ZeroDivisionError:
-            precision = 0
-        recall = TP/(TP+FN)
-        try:
-            f_measure = 2*((precision*recall)/(precision+recall))
-        except ZeroDivisionError:
-            f_measure = 0
-        classifier_results_proba['f_measure'].append(f_measure)
-        classifier_results_proba['precision'].append(precision)
-        classifier_results_proba['recall'].append(recall)
-        classifier_results_proba['mcc'].append(mcc)
-        classifier_results_proba['tp'].append(TP)
-        classifier_results_proba['fp'].append(FP)
-        classifier_results_proba['fn'].append(FN)
-        classifier_results_proba['tn'].append(TN)
-        classifier_results_proba['precision@15'].append(precision_at_15)
-        classifier_results_proba['precision@20'].append(precision_at_20)
-        classifier_results_proba['precision@n_positives'].append(
-            precision_at_20p)
-        classifier_results_proba['threshold'].append(threshold)
-
-    classifier_results_df = pd.DataFrame(classifier_results)
-    classifier_results_proba_df = pd.DataFrame(classifier_results_proba)
-    return classifier_results_df, classifier_results_proba_df, cv_results, n_fs
-
-
-def multiple_fs_classifier2(model, params, data_, test_indices_, data_fs, labels, jobs=20):
-    # Same as multiple_fs_classifier. Additionally returns the trained models in a pickle file.
-    warnings.filterwarnings("ignore")
-    classifier_results = {'tp': [], 'fp': [], 'fn': [], 'tn': [
-    ], 'precision': [], 'recall': [], 'f_measure': [], 'mcc': []}
-    classifier_results_proba = {'tp': [], 'fp': [], 'fn': [], 'tn': [], 'precision': [], 'recall': [], 'f_measure': [
-    ], 'mcc': [], 'precision@15': [], 'precision@20': [], 'precision@n_positives': [], 'threshold': []}
+    ], 'mcc': [], 'precision@k_random': [], 'auprc_random': [], 'threshold': []}
     cv_results = []
     n_fs = []
     clf_models = []
-    for i in tqdm_notebook(range(len(labels.columns))):
+    for i in tqdm(range(len(labels.columns))):
         clf = None
         mean_f_measure = 0
         std_f_measure = 0
@@ -436,9 +323,9 @@ def multiple_fs_classifier2(model, params, data_, test_indices_, data_fs, labels
             y_test = labels.iloc[test_indices, i]
             X_train = data[:, train_indices].transpose()
             y_train = labels.iloc[train_indices, i]
-            clf = HalvingGridSearchCV(model, params, scoring='f1', n_jobs=jobs,
+            scoring_f1 = make_scorer(f1_score, zero_division=0)
+            clf = HalvingGridSearchCV(model, params, scoring=scoring_f1, n_jobs=jobs,
                                       cv=10, error_score=0.0, verbose=0)
-
             clf.fit(X_train, y_train)
             cv_results_df = pd.DataFrame(clf.cv_results_)
             max_iter = cv_results_df['iter'].max()
@@ -464,8 +351,8 @@ def multiple_fs_classifier2(model, params, data_, test_indices_, data_fs, labels
         classifier_results['f_measure'].append(
             f1_score(y_test_best, y_pred, zero_division=0))
         classifier_results['precision'].append(
-            precision_score(y_test_best, y_pred))
-        classifier_results['recall'].append(recall_score(y_test_best, y_pred))
+            precision_score(y_test_best, y_pred, zero_division=0))
+        classifier_results['recall'].append(recall_score(y_test_best, y_pred, zero_division=0))
         classifier_results['mcc'].append(
             matthews_corrcoef(y_test_best, y_pred))
         classifier_results['tp'].append(tp)
@@ -499,10 +386,12 @@ def multiple_fs_classifier2(model, params, data_, test_indices_, data_fs, labels
                  >= threshold]['label']) - TP
         FN = tot_pos-TP
         TN = tot_labels-FP-TP-FN
-        precision_at_20 = sum(value_labels['label'][:20])/20
-        precision_at_15 = sum(value_labels['label'][:15])/15
+
         precision_at_20p = sum(
             value_labels['label'][:int(tot_pos)])/int(tot_pos)
+        precision_scores, recall_scores, thresholds_pr  = precision_recall_curve(value_labels['label'], value_labels['value'])
+        auprc = auc(recall_scores, precision_scores)
+        random_precision = (TP+FN)/(TP+FP+FN+TN)
         try:
             mcc = (TP*TN-FP*FN)/(((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))**0.5)
         except ZeroDivisionError:
@@ -524,10 +413,10 @@ def multiple_fs_classifier2(model, params, data_, test_indices_, data_fs, labels
         classifier_results_proba['fp'].append(FP)
         classifier_results_proba['fn'].append(FN)
         classifier_results_proba['tn'].append(TN)
-        classifier_results_proba['precision@15'].append(precision_at_15)
-        classifier_results_proba['precision@20'].append(precision_at_20)
-        classifier_results_proba['precision@n_positives'].append(
-            precision_at_20p)
+        classifier_results_proba['precision@k_random'].append(
+            precision_at_20p/random_precision)
+        classifier_results_proba['auprc_random'].append(
+            auprc/random_precision)
         classifier_results_proba['threshold'].append(threshold)
 
     classifier_results_df = pd.DataFrame(classifier_results)
@@ -550,7 +439,7 @@ def whole_clf(data, labels, models, fs, n_fs, threshold):
 
     classifier_results = {'tp': [], 'fp': [], 'fn': [], 'tn': [
     ], 'precision': [], 'recall': [], 'f_measure': [], 'mcc': [], 'new_proteins': []}
-    for i in tqdm_notebook(range(data.shape[0])):
+    for i in tqdm(range(data.shape[0])):
         module_fs = fs.iloc[:, i]
         y_true = labels.iloc[:, i]
         module_data = data[list(module_fs.sort_values(
@@ -589,7 +478,7 @@ def multiple_fs_classifier_fp(model, params, data_, test_indices_, data_fs, labe
     cv_results = []
     n_fs = []
     clf_models = []
-    for i in tqdm_notebook(range(len(labels.columns))):
+    for i in tqdm(range(len(labels.columns))):
         clf = None
         mean_f_measure = 0
         std_f_measure = 0
