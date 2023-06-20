@@ -1,13 +1,20 @@
 """APID Database Download already allows the inclusion of HGNC Unique
-Identifiers in the data. However, some of these are IDs are
-depricated and were replaced by newer versions, so each ID should be
+Identifiers in the data. However, some of these IDs are
+deprecated and were replaced by newer versions, so each ID should be
 confirmed to be in its most recent version."""
 
 import pandas as pd
 import id_conversion
 
-apid = pd.read_csv("././data/raw/9606_noISI_Q2.txt", sep='\t', header=0, index_col='InteractionID')
-hgnc_symbols = pd.read_csv("././data/raw/hgnc_reference_table.txt", sep='\t', header=0)
+apid = pd.read_csv(
+    "python/data/raw/9606_noISI_Q2.txt",
+      sep='\t', header=0, index_col='InteractionID'
+      )
+
+hgnc_symbols = pd.read_csv(
+    "python/data/raw/hgnc_reference_table.txt",
+      sep='\t', header=0
+      )
 
 genenames = set(list(apid['GeneName_A'].unique()) + list(apid['GeneName_B'].unique()))  # set of unique apid genes
 
@@ -36,7 +43,7 @@ for id in ids_not_found:
 missing_apid_ids_df = pd.DataFrame.from_dict(missing_apid_ids_dict)
 
 hgnc_symbols = hgnc_symbols.append(missing_apid_ids_df)
-hgnc_symbols.to_csv('././data/interim/HGNC symbols.txt', header=-1, index=False)
+hgnc_symbols.to_csv('python/data/interim/HGNC symbols.txt', header=-1, index=False)
 
 apid = apid[['GeneName_A', 'GeneName_B']]
-apid.to_csv('././data/interim/apid.csv', header=-1, index=False)
+apid.to_csv('python/data/interim/apid.csv', header=-1, index=False)

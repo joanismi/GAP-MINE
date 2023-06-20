@@ -1,5 +1,5 @@
 import requests
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 
 def genecards_search(proteins, idtype='uniprot'):
