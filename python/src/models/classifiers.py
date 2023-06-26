@@ -1,9 +1,5 @@
-
-import warnings
 import sys
 from sklearn.preprocessing import binarize
-from sklearn.exceptions import FitFailedWarning, ConvergenceWarning
-#from sklearn.utils._testing import ignore_warnings
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.metrics import confusion_matrix, precision_score, f1_score, recall_score, f1_score, matthews_corrcoef, precision_recall_curve, auc, make_scorer
@@ -16,7 +12,9 @@ from statistics import mean, median, stdev
 sys.path.append('../features')
 from disease_process_proteins import process_selector
 
-warnings.filterwarnings("ignore")
+import os
+import warnings
+from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
 
 
 def threshold_classifier(df_values, df_labels, test_indices=False, op_metric='f_measure'):
@@ -281,7 +279,6 @@ def threshold_classifier_fp(df_values, df_labels, test_indices=False, op_metric=
     results = pd.DataFrame(classifier_results)
     return results
 
-from sklearn.exceptions import ConvergenceWarning
 
 def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels, jobs=20):
     # GENEap algorithm for protein-process and protein-disease association prediction by implementing a machine learning model.
@@ -296,7 +293,7 @@ def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels,
     #   - dataframe with test indices.
     #   - dataframe with VIP scores.
     #   - dataframe with protein labels.
-    #   - nº of cores.
+    #   - # of cores.
     #
     # RETURNS: dataframe with a collection of performance metrics, dataframe with a collection of performance metrics given probability prediction, dataframe with cv results and number of processes/diseases chosen in the best model.
     #warnings.filterwarnings("ignore")
@@ -309,6 +306,7 @@ def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels,
     cv_results = []
     n_fs = []
     clf_models = []
+    
     for i in tqdm(range(len(labels.columns))):
         clf = None
         mean_f_measure = 0
@@ -324,9 +322,21 @@ def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels,
             X_train = data[:, train_indices].transpose()
             y_train = labels.iloc[train_indices, i]
             scoring_f1 = make_scorer(f1_score, zero_division=0)
+                        
+                    
             clf = HalvingGridSearchCV(model, params, scoring=scoring_f1, n_jobs=jobs,
-                                      cv=10, error_score=0.0, verbose=0)
-            clf.fit(X_train, y_train)
+                                        cv=10, error_score=0.0, verbose=0)
+            
+
+            # We are using HalvingGridSearchCV to optimize hyperparameters.
+            # These means we will enconter several parameter combinations that will result in convergence and fit failures.
+            # To avoid a lenghty output we will ignore these warnings
+            if not sys.warnoptions:
+                warnings.simplefilter("ignore", category=ConvergenceWarning)
+                warnings.simplefilter("ignore", category=FitFailedWarning)
+                os.environ["PYTHONWARNINGS"] = "ignore" # Also affect subprocesses
+                clf.fit(X_train, y_train)
+
             cv_results_df = pd.DataFrame(clf.cv_results_)
             max_iter = cv_results_df['iter'].max()
             if cv_results_df[cv_results_df['iter'] == max_iter]['mean_test_score'].max() >= mean_f_measure:

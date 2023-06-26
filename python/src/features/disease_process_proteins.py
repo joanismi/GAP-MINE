@@ -154,7 +154,7 @@ def protein_ppi_by_process(proteins_by_process_df, adjacency_matrix, reduced=Fal
 
 
 def graph_reduction(ppis):
-    # Creates graph for the randomçy reduced networks.
+    # Creates graph for the randomly reduced networks.
     # INPUT:
     #   - PPI array
     #
