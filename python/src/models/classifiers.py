@@ -370,6 +370,7 @@ def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels,
         classifier_results['fn'].append(fn)
         classifier_results['tn'].append(tn)
 
+        ############################################################################
         value_labels = pd.DataFrame({'value': y_train_pred, 'label': y_train})
         value_labels.sort_values(by=['value'], ascending=False, inplace=True)
         tot_pos = sum(value_labels['label'])
@@ -379,14 +380,20 @@ def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels,
         FP = np.array(range(1, tot_labels+1)) - TP
         FN = tot_pos-TP
         TN = tot_labels-FP-TP-FN
-        mcc = (TP*TN-FP*FN)/(((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))**0.5)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            mcc = (TP*TN-FP*FN)/(((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))**0.5)
+            
         mcc = np.where(np.isinf(mcc), -np.Inf, mcc)
+
         precision = TP/(TP+FP)
         recall = TP/(TP+FN)
         f_measure = 2*((precision*recall)/(precision+recall))
         best_result_index = np.nanargmax(f_measure)
         threshold = value_labels['value'].values[best_result_index]
 
+        ################################################################################
         value_labels = pd.DataFrame({'value': y_pred_proba, 'label': y_test})
         value_labels.sort_values(by=['value'], ascending=False, inplace=True)
         tot_pos = sum(value_labels['label'])
@@ -402,19 +409,29 @@ def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels,
         precision_scores, recall_scores, thresholds_pr  = precision_recall_curve(value_labels['label'], value_labels['value'])
         auprc = auc(recall_scores, precision_scores)
         random_precision = (TP+FN)/(TP+FP+FN+TN)
-        try:
-            mcc = (TP*TN-FP*FN)/(((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))**0.5)
-        except ZeroDivisionError:
+
+        a = TP*TN-FP*FN
+        b = ((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
+        if b==0:
             mcc = 0
-        try:
-            precision = TP/(TP+FP)
-        except ZeroDivisionError:
+        else:
+            mcc = a/(b**0.5)
+            
+        # calculate precision
+        if (TP+FP) == 0:
             precision = 0
+        else:
+            precision = TP/(TP+FP)
+            
+        # calculate recall
         recall = TP/(TP+FN)
-        try:
-            f_measure = 2*((precision*recall)/(precision+recall))
-        except ZeroDivisionError:
+        
+        # Calculate f-measure
+        if (precision+recall) == 0:
             f_measure = 0
+        else:
+            f_measure = 2*((precision*recall)/(precision+recall))           
+        
         classifier_results_proba['f_measure'].append(f_measure)
         classifier_results_proba['precision'].append(precision)
         classifier_results_proba['recall'].append(recall)
