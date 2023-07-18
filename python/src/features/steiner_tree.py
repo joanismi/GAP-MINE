@@ -15,11 +15,13 @@ def sca(idlist, graph, adj):
         # print(lcc)
         ind_comp_adj_matrices = [comp_adj_matrix[:, comp]
                                  for comp in components]
+        
         max_addition = []
         for ind_comp in ind_comp_adj_matrices:
             n_int = np.sum(ind_comp, axis=1)
             n_int[n_int >= 1] = ind_comp.shape[1]
             max_addition.append(n_int)
+        
         max_addition = np.array(max_addition).transpose()
         max_addition_total = np.array(max_addition).sum(axis=1)
         if max(max_addition_total) > lcc:

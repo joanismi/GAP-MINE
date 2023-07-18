@@ -2,12 +2,12 @@ import pandas as pd
 import id_conversion
 from tqdm import tqdm
 
-hgnc_reference_table = pd.read_csv("././data/interim/HGNC symbols.txt", sep=',', header=0)
+hgnc_reference_table = pd.read_csv("python/data/interim/hgnc_symbols.csv", sep=',', header=0)
 hgnc_reference_table.drop_duplicates(inplace=True)
 
 ncbi_symbols = hgnc_reference_table[~hgnc_reference_table['NCBI Gene ID(supplied by NCBI)'].isnull()][['Approved symbol', 'NCBI Gene ID(supplied by NCBI)']]
 
-reactome = pd.read_csv("././data/raw/NCBI2ReactomeReactions.txt", sep='\t', header=None, names = ['NCBI ID', 'Reactome ID', 'URL', 'Event', 'Evidence Code', 'Species'])
+reactome = pd.read_csv("python/data/raw/NCBI2ReactomeReactions.txt", sep='\t', header=None, names = ['NCBI ID', 'Reactome ID', 'URL', 'Event', 'Evidence Code', 'Species'])
 reactome = reactome[reactome['Species'] == 'Homo sapiens']
 
 ncbi_reactome_id = list(reactome['NCBI ID'].unique())
@@ -25,4 +25,4 @@ for key, value in ncbi_ids_genecards.items():
 reactome = reactome[~reactome['HGNC ID'].isnull()]
 grouped = reactome.groupby(['Reactome ID'])
 reactome = grouped.filter(lambda x: 50 <= len(x) <= 300)
-reactome.to_csv('././data/interim/ReactomeReactions.csv', header=-1, index=False)
+reactome.to_csv('python/data/interim/reactome_reactions.csv', header=-1, index=False)

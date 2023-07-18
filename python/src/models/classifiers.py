@@ -1,11 +1,10 @@
 import sys
-from sklearn.preprocessing import binarize
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.metrics import confusion_matrix, precision_score, f1_score, recall_score, f1_score, matthews_corrcoef, precision_recall_curve, auc, make_scorer
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import StratifiedKFold
-from tqdm.notebook import tqdm
+from sklearn.model_selection import StratifiedKFold, train_test_split, cross_val_score
+from tqdm.notebook import tqdm, tnrange
 import numpy as np
 import pandas as pd
 from statistics import mean, median, stdev
@@ -280,7 +279,159 @@ def threshold_classifier_fp(df_values, df_labels, test_indices=False, op_metric=
     return results
 
 
+def logistic_classifier(data_, data_fs, labels, n_jobs=-1):
+
+    classifier_results = {'tp': [], 'fp': [], 'fn': [], 'tn': [], 'precision': [], 'recall': [], 'f_measure': [], 'mcc': []}
+    classifier_results_proba = {'tp': [], 'fp': [], 'fn': [], 'tn': [], 'precision': [], 'recall': [], 'f_measure': [
+    ], 'mcc': [], 'precision@k_random': [], 'auprc_random': [], 'threshold': []}
+    cv_results = []
+    n_fs = []
+    clf_models = []
+
+    for i in tnrange(len(data_fs.columns)):
+        clf = None
+        mean_f_measure = 0
+        std_f_measure = 0
+        for method in ['10', 'middle', 'outlier10']:
+            data_fs_ = process_selector(data_fs, i, method)
+            data = data_[:, data_fs_]
+
+            X_train, X_test, y_train, y_test = train_test_split(data, labels.iloc[:,i], train_size=0.8, random_state=42)
+            
+            
+            clf = LogisticRegression(
+                penalty=None,
+                solver='lbfgs',
+                max_iter=100,
+                n_jobs=n_jobs,
+                verbose=0
+                )
+            
+            scoring_f1 = make_scorer(f1_score, zero_division=0)
+            
+            if not sys.warnoptions:
+                warnings.simplefilter("ignore", category=ConvergenceWarning)
+                warnings.simplefilter("ignore", category=FitFailedWarning)
+                os.environ["PYTHONWARNINGS"] = "ignore"
+                cv = cross_val_score(clf, X_train, y_train, scoring=scoring_f1, cv=10, n_jobs=n_jobs)
+                clf.fit(X_train, y_train)
+            
+            cv_mean, cv_std = cv.mean(), cv.std()
+
+            if cv_mean > mean_f_measure:
+                mean_f_measure = cv_mean
+                std_f_measure = cv_std
+                best_clf = clf
+                X_test_best = X_test
+                X_train_best = X_train
+                y_test_best = y_test
+                best_n = data_fs_.shape[0]
+
+        cv_results.append((mean_f_measure, std_f_measure))
+        n_fs.append(best_n)
+        clf_models.append(best_clf)
+        y_pred = best_clf.predict(X_test_best)
+        y_train_pred = best_clf.predict_proba(X_train_best)[:, 1]
+        y_pred_proba = best_clf.predict_proba(X_test_best)[:, 1]
+        tn, fp, fn, tp = confusion_matrix(y_test_best, y_pred).ravel()
+
+        classifier_results['f_measure'].append(
+            f1_score(y_test_best, y_pred, zero_division=0))
+        classifier_results['precision'].append(
+            precision_score(y_test_best, y_pred, zero_division=0))
+        classifier_results['recall'].append(recall_score(y_test_best, y_pred, zero_division=0))
+        classifier_results['mcc'].append(
+            matthews_corrcoef(y_test_best, y_pred))
+        classifier_results['tp'].append(tp)
+        classifier_results['fp'].append(fp)
+        classifier_results['fn'].append(fn)
+        classifier_results['tn'].append(tn)
+
+    ############################################################################
+    # Compute threshold
+    value_labels = pd.DataFrame({'value': y_train_pred, 'label': y_train})
+    value_labels.sort_values(by=['value'], ascending=False, inplace=True)
+    tot_pos = sum(value_labels['label'])
+    ord_labels = np.array(value_labels['label'].values)
+    tot_labels = len(ord_labels)
+    TP = np.cumsum(ord_labels)
+    FP = np.array(range(1, tot_labels+1)) - TP
+    FN = tot_pos-TP
+    TN = tot_labels-FP-TP-FN
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        mcc = (TP*TN-FP*FN)/(((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))**0.5)
+        
+    mcc = np.where(np.isinf(mcc), -np.Inf, mcc)
+
+    precision = TP/(TP+FP)
+    recall = TP/(TP+FN)
+    f_measure = 2*((precision*recall)/(precision+recall))
+    best_result_index = np.nanargmax(f_measure)
+    threshold = value_labels['value'].values[best_result_index]
+
+    ################################################################################
+    value_labels = pd.DataFrame({'value': y_pred_proba, 'label': y_test})
+    value_labels.sort_values(by=['value'], ascending=False, inplace=True)
+    tot_pos = sum(value_labels['label'])
+    tot_labels = len(value_labels['label'])
+    TP = sum(value_labels[value_labels['value'] >= threshold]['label'])
+    FP = len(value_labels[value_labels['value']
+                >= threshold]['label']) - TP
+    FN = tot_pos-TP
+    TN = tot_labels-FP-TP-FN
+
+    precision_at_20p = sum(
+        value_labels['label'][:int(tot_pos)])/int(tot_pos)
+    precision_scores, recall_scores, thresholds_pr  = precision_recall_curve(value_labels['label'], value_labels['value'])
+    auprc = auc(recall_scores, precision_scores)
+    random_precision = (TP+FN)/(TP+FP+FN+TN)
+
+    a = TP*TN-FP*FN
+    b = ((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
+    if b==0:
+        mcc = 0
+    else:
+        mcc = a/(b**0.5)
+        
+    # calculate precision
+    if (TP+FP) == 0:
+        precision = 0
+    else:
+        precision = TP/(TP+FP)
+        
+    # calculate recall
+    recall = TP/(TP+FN)
+    
+    # Calculate f-measure
+    if (precision+recall) == 0:
+        f_measure = 0
+    else:
+        f_measure = 2*((precision*recall)/(precision+recall))           
+    
+    classifier_results_proba['f_measure'].append(f_measure)
+    classifier_results_proba['precision'].append(precision)
+    classifier_results_proba['recall'].append(recall)
+    classifier_results_proba['mcc'].append(mcc)
+    classifier_results_proba['tp'].append(TP)
+    classifier_results_proba['fp'].append(FP)
+    classifier_results_proba['fn'].append(FN)
+    classifier_results_proba['tn'].append(TN)
+    classifier_results_proba['precision@k_random'].append(
+        precision_at_20p/random_precision)
+    classifier_results_proba['auprc_random'].append(
+        auprc/random_precision)
+    classifier_results_proba['threshold'].append(threshold)
+
+    classifier_results_df = pd.DataFrame(classifier_results)
+    classifier_results_proba_df = pd.DataFrame(classifier_results_proba)
+    
+    return classifier_results_df, classifier_results_proba_df, cv_results, n_fs, clf_models
+
+
 def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels, jobs=20):
+    """
     # GENEap algorithm for protein-process and protein-disease association prediction by implementing a machine learning model.
     # Optimizes the chosen ML model with Halving Grid Search and a 10-fold CV. Runs the model with three different sets of data, dependent on the defined VIP cutoff.
     # Predicts labels following two approaches: binary output where labels with a predicted probability above 0.5 are predicted as positives; and probability where
@@ -296,6 +447,7 @@ def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels,
     #   - # of cores.
     #
     # RETURNS: dataframe with a collection of performance metrics, dataframe with a collection of performance metrics given probability prediction, dataframe with cv results and number of processes/diseases chosen in the best model.
+    """
     #warnings.filterwarnings("ignore")
     #warnings.filterwarnings("always")
     #warnings.warn("once")
@@ -371,6 +523,7 @@ def multiple_fs_classifier(model, params, data_, test_indices_, data_fs, labels,
         classifier_results['tn'].append(tn)
 
         ############################################################################
+        # Compute threshold
         value_labels = pd.DataFrame({'value': y_train_pred, 'label': y_train})
         value_labels.sort_values(by=['value'], ascending=False, inplace=True)
         tot_pos = sum(value_labels['label'])

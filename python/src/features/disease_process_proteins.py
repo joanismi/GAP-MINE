@@ -1,35 +1,25 @@
-import random
 import pandas as pd
 import numpy as np
 from tqdm.notebook import tqdm
 from igraph import Graph
 from ast import literal_eval
+from tqdm import trange
+from joblib import Parallel, delayed
 
-
-def get_protein_index(dataframe, data_origin, g_simple):
+def get_protein_index(dataframe, graph, module_id_col='Reactome_ID', protein_id_col='protein_id'):
     # INPUT:
     #   -Dataframe of the process/disease,
     #   -whether the dataframe is from reactome or disgenet
     #   -protein graph
     #
     # RETURNS: set of proteins and respective IDs grouped by each process/disease
-    if data_origin == 'disgenet':
-        group_column = 'diseaseId'
-        protein_column = 'geneSymbol'
-    if data_origin == 'reactome':
-        group_column = 'Reactome ID'
-        protein_column = 'HGNC ID'
-    proteins_by_disease_df = dataframe.groupby(
-        group_column)[protein_column].apply(list).reset_index()
-    proteins_by_disease_df.columns = ['process', 'proteins_ids']
-    protein_indexes_list = []
-    for protein_list in proteins_by_disease_df['proteins_ids'].values:
-        protein_indexes = []
-        for protein in protein_list:
-            protein_indexes.append(g_simple.vs.find(protein).index)
-        protein_indexes_list.append(protein_indexes)
-    proteins_by_disease_df['protein_index'] = protein_indexes_list
-    return proteins_by_disease_df
+   
+    new_dataframe = dataframe.copy()
+    new_dataframe['protein_index'] = [graph.vs.find(protein).index for protein in new_dataframe[protein_id_col]]
+    
+    new_dataframe = new_dataframe.groupby(module_id_col, as_index=False).aggregate(list)
+    new_dataframe['module_size'] = new_dataframe['protein_index'].transform(len)
+    return new_dataframe
 
 
 def process_proteins_selection(df_, proteins_df, multiple_df=True):
@@ -86,31 +76,6 @@ def process_proteins_selection(df_, proteins_df, multiple_df=True):
     return process_proteins_df, remain_proteins_df
 
 
-def random_reduction(ppis, percentage, n_reps):
-    # From the protein-protein interaction data, create n_reps random reductions of the interactions, with a specified percentage.
-    #
-    # INPUT:
-    #   - PPI Data
-    #   - percentage of PPIs wanted
-    #   - number of random reductions
-    #
-    # RETURNS: numpy array with the several random reductions.
-    ppis_array = ppis.to_numpy()
-    n_ppis = int(round(len(ppis_array) * percentage, 0))
-    rng = np.random.default_rng()
-    for n in range(n_reps):
-        if n == 0:
-            random_ppis = np.array(
-                [rng.choice(ppis_array, n_ppis, replace=False)])
-            print(random_ppis.shape)
-        else:
-            red_ppis = np.array(
-                [rng.choice(ppis_array, n_ppis, replace=False)])
-            print(red_ppis.shape)
-            random_ppis = np.concatenate((random_ppis, red_ppis))
-    return random_ppis
-
-
 def protein_ppi_by_process(proteins_by_process_df, adjacency_matrix, reduced=False):
     if reduced:
         try:
@@ -151,77 +116,6 @@ def protein_ppi_by_process(proteins_by_process_df, adjacency_matrix, reduced=Fal
         return protein_ppi_by_process_df, adjacency_matrix, graph_.vs['name']
     else:
         return protein_ppi_by_process_df
-
-
-def graph_reduction(ppis):
-    # Creates graph for the randomly reduced networks.
-    # INPUT:
-    #   - PPI array
-    #
-    # RETURNS: Saves graph and gives list of graph proteins.
-    ppis = pd.DataFrame(ppis)
-    reduced_graph = Graph.DataFrame(ppis[['V1', 'V2']], directed=False)
-    graph = reduced_graph.simplify()
-    if not graph.is_connected():
-        cluster = graph.clusters()
-        graph = graph.induced_subgraph(cluster[0])
-        graph.write_gml("../python/data/graph_apid_huri_80")
-    return graph.vs['name']
-
-
-def random_reduction_protein(ppis, percentage, n_reps):
-    # From the protein-protein interaction data, create n_reps random reductions of the interactions given the protein degree, with a specified percentage.
-    #
-    # INPUT:
-    #   - PPI Data
-    #   - percentage of proteins wanted
-    #   - number of random reductions
-    #
-    # RETURNS: numpy array with the several random reductions.
-
-    ppis_array = ppis.to_numpy()
-    degree = {}
-    for ppi in ppis_array:
-        if ppi[0] != ppi[1]:
-            if ppi[0] in degree:
-                if ppi[1] not in degree[ppi[0]]:
-                    degree[ppi[0]].append(ppi[1])
-            else:
-                degree[ppi[0]] = [ppi[1]]
-            if ppi[1] in degree:
-                if ppi[0] not in degree[ppi[1]]:
-                    degree[ppi[1]].append(ppi[0])
-            else:
-                degree[ppi[1]] = [ppi[0]]
-    degree_count = {protein: len(list_protein)
-                    for protein, list_protein in degree.items()}
-
-    degree_count_df = pd.DataFrame.from_dict(
-        degree_count, orient='index').sort_index()
-    degree_count_values = list(degree_count_df.to_dict()[0].values())
-    normalizer = round(1/float(sum(degree_count_values)), 64)
-    degree_count_proba = np.array(
-        [round(count*normalizer, 64) for count in degree_count_values]).astype('float64')
-    degree_count_proba /= degree_count_proba.sum()
-    degree_count_df['proba'] = degree_count_proba
-
-    rng = np.random.default_rng()
-    proteins = list(degree_count.keys())
-    n_proteins_red = int(len(proteins)*percentage)
-    random_ppis = np.zeros((n_reps, 185000, 7), dtype='object')
-    for n in range(n_reps):
-        random_proteins = rng.choice(
-            proteins, n_proteins_red, replace=False, p=degree_count_proba)
-        for ppis in ppis_array:
-            if ppis[0] not in random_proteins and ppis[1] in random_proteins:
-                np.append(random_proteins, np.array(ppis[0]))
-            if ppis[1] not in random_proteins and ppis[0] in random_proteins:
-                np.append(random_proteins, np.array(ppis[1]))
-        red_ppis = np.array(
-            [ppi for ppi in ppis_array if ppi[0] in random_proteins and ppi[1] in random_proteins])
-        random_ppis[n, :len(red_ppis), :] = red_ppis
-
-    return random_ppis
 
 
 def process_selector(fs_df, column, method):
@@ -288,5 +182,38 @@ def process_selector(fs_df, column, method):
             fs_list = fs_list[:len_threshold-1]
             fs_list.append(column)
         fs.append(fs_list)
+    
+    return np.array(fs[0])
 
-    return np.array(fs)
+
+def add_false_annotations(modules_df, sp_df, graph, modules_col='module_id', n_jobs=-1):
+    """
+    Adds false annotations to proteins.
+
+    modules_df: array like
+    """
+    rng = np.random.default_rng(42)
+    
+    def f(module, modules_df, graph, modules_col):
+        protein_indices = modules_df.iloc[module]['protein_index']
+        
+        min_sp = sp_df.loc[~sp_df.index.isin(protein_indices), protein_indices].min(axis=1)
+        min_sp_index = min_sp.index
+        min_sp = min_sp.to_numpy()
+        degree_values = np.array(graph.degree(sp_df[~sp_df.index.isin(protein_indices)].index))
+        log_degree_values = np.log10(degree_values)
+
+        weight = log_degree_values/(10**min_sp)
+        
+        normalized_weight = weight/np.sum(weight)
+
+        new_proteins = list(rng.choice(min_sp_index, int(len(protein_indices)*0.1), p=normalized_weight))
+
+        indices = protein_indices+new_proteins
+        ids = graph.vs[indices]['name']
+        
+        return {modules_col: modules_df.iloc[module][modules_col], 'protein_id': ids, 'protein_index': indices}
+    
+    fa_df = Parallel(n_jobs=n_jobs)(delayed(f)(module, modules_df, graph, modules_col) for module in trange(modules_df.shape[0]))
+        
+    return pd.DataFrame(fa_df)

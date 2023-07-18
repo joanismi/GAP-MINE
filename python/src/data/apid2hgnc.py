@@ -42,8 +42,8 @@ for id in ids_not_found:
     missing_apid_ids_dict['UniProt ID(supplied by UniProt)'].append(uniprot_id)
 missing_apid_ids_df = pd.DataFrame.from_dict(missing_apid_ids_dict)
 
-hgnc_symbols = hgnc_symbols.append(missing_apid_ids_df)
-hgnc_symbols.to_csv('python/data/interim/HGNC symbols.txt', header=-1, index=False)
+hgnc_symbols = pd.concat([hgnc_symbols, missing_apid_ids_df])
+hgnc_symbols.to_csv('python/data/interim/hgnc_symbols.csv', header=-1, index=False)
 
 apid = apid[['GeneName_A', 'GeneName_B']]
 apid.to_csv('python/data/interim/apid.csv', header=-1, index=False)
