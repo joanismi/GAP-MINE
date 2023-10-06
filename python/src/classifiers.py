@@ -18,6 +18,8 @@ from igraph import Graph
 
 from rpy2.robjects import r, numpy2ri, default_converter, IntVector, FactorVector
 from rpy2.robjects.packages import importr
+import rpy2
+
 ########################################### NEW ##########################################################
 def tuckeys_fences(s, fence='upper', k=1.5):
     """
@@ -56,11 +58,18 @@ def tuckeys_fences(s, fence='upper', k=1.5):
     
     return fence_val
 
-
+#import rpy2.rinterface_lib.callbacks rpy2.rinterface_lib.callbacks.consolewrite_warnerror = my_callback, my_callback = lambda *args: None
 def feature_selection(X, y, module, cv=5):
     """
     Computes feature selection using OPLS-DA.
     """
+    # suppress outputs to R console
+    buf = []
+    def f(x):
+        buf.append(x)
+
+    consolewrite_warnerror_backup = rpy2.rinterface_lib.callbacks.consolewrite_warnerror
+    rpy2.rinterface_lib.callbacks.consolewrite_warnerror = f
 
     ropls = importr('ropls')
     # Create a converter that starts with rpy2's default converter
@@ -89,18 +98,25 @@ def feature_selection(X, y, module, cv=5):
 
     # upper outlier features
     outliers = np.flatnonzero(vips>=threshold)
+    if outliers.shape[0] > 0:
+        
+        # top half of upper outliers features
+        c = vips[vips>=threshold]
+        top_outliers = outliers[c >= np.median(c)]
     
-    # top half of upper outliers features
-    c = vips[vips>=threshold]
-    top_outliers = outliers[c >= np.median(c)]
-
-    features = [top10, outliers, top_outliers]
-    
+        features = [top10, outliers, top_outliers]
+    else:
+        features = [top10]
+        print(module)
+        
     for f in range(len(features)):
         if module not in features[f]:
             features[f] = np.concatenate((features[f], [5]))
 
-    return features, vips
+    # restore default function
+    rpy2.rinterface_lib.callbacks.consolewrite_warnerror = consolewrite_warnerror_backup
+    
+    return features, vips, buf
 
 
 def add_false_annotations(y, graph, sp, added_pct=0.1, random_state=None):
@@ -171,7 +187,7 @@ def gapmine(X, y, module, train_size=0.8, beta=1, false_annotations=False, short
     X_test = scaler.fit_transform(X_test)
     
     # feature selection
-    features, _ = feature_selection(X_train, y_train, module, cv=5)
+    features, _, _ = feature_selection(X_train, y_train, module, cv=5)
     
     ########################### Cross-validation #####################################
     cv_results = {'best_score': 0, 'best_C': 0, 'n_iter': 0, 'n_features': 0, 'fs': 0}
