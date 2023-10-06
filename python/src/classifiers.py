@@ -65,11 +65,11 @@ def feature_selection(X, y, module, cv=5):
     """
     # suppress outputs to R console
     buf = []
-    def f(x):
+    def warn(x):
         buf.append(x)
 
     consolewrite_warnerror_backup = rpy2.rinterface_lib.callbacks.consolewrite_warnerror
-    rpy2.rinterface_lib.callbacks.consolewrite_warnerror = f
+    rpy2.rinterface_lib.callbacks.consolewrite_warnerror = warn
 
     ropls = importr('ropls')
     # Create a converter that starts with rpy2's default converter
