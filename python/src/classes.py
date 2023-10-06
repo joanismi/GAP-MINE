@@ -1,5 +1,6 @@
 import numpy as np
-from sklearn.metrics import f1_score, fbeta_score, precision_recall_curve
+from sklearn.metrics import f1_score, fbeta_score, precision_recall_curve, make_scorer, confusion_matrix,\
+    precision_score, recall_score, matthews_corrcoef, average_precision_score
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.base import ClassifierMixin, clone
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
@@ -8,6 +9,171 @@ from sklearn.preprocessing import StandardScaler
 from classifiers import tuckeys_fences
 import sys
 import warnings
+from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
+import os
+
+def top_k_precision(y_true, y_pred_proba):
+    """
+    Calculates the precision at (P@K) where K is the number of positives
+    in the test set.
+    """
+    k = np.sum(y_true) # n_positives
+    
+    top_k = y_true[np.argsort(y_pred_proba)[::-1]][:k]
+
+    # TP/(TP+FP)
+    precision = np.sum(top_k)/k
+
+    return precision
+
+
+def compute_db(y_test, y_pred_proba, beta=1):
+    """
+    Calculates the decision boundary that maximizes the f_beta score using the precision-recall
+    curve.
+    """
+    precision, recall, thresholds_ = precision_recall_curve(y_test, y_pred_proba)
+    
+    f_beta = (1+beta**2)*precision*recall/((beta**2)*precision+recall)
+    threshold = thresholds_[np.nanargmax(f_beta)]
+    
+    return threshold
+    
+
+def db_calibration(X, y, clf, beta=1):
+    """
+    Calibrates the decision boundary of a logistic regression classifier using cross-validation.
+    """
+    skf = StratifiedKFold(n_splits=10)
+    split = skf.split(X, y)
+
+    thresholds = []
+    for train_index, test_index in split:
+        X_train,  y_train = X[train_index], y[train_index]
+        X_test, y_test = X[test_index], y[test_index]
+        
+        log_reg = LogisticRegression(C=clf.C_[0])
+        log_reg.fit(X_train, y_train)
+        y_pred_proba = log_reg.predict_proba(X_test)[:, 1]
+        
+        threshold = compute_db(y_test, y_pred_proba, beta=beta)
+                
+        thresholds.append(threshold)
+
+    return np.mean(thresholds)
+
+
+def add_false_annotations(y, graph, sp, added_pct=0.1, random_state=None):
+    """
+    Adds false annotations to a module. Selects proteins with no known association 
+    to a module and annotates them as associated. Proteins closer to module proteins have a
+    higher probability of being wrongly annotated.
+
+    Parameters:
+    ---------
+    y: array-like 1D
+        
+    graph: array-like 2D
+
+    sp: array-like 2D
+    
+    random_state: int, RandomState instance or None, default=None
+
+    Returns:
+    --------
+    y_fa: 1D array
+        Module labels with false annotations.
+    """
+    rng = np.random.default_rng(random_state)
+    y_fa = y.copy()
+
+    module_proteins = np.flatnonzero(y_fa == 1)
+    other_proteins = np.logical_not(module_proteins)
+
+    min_sp = np.min(sp[np.ix_(other_proteins, module_proteins)], axis=1)
+
+    degree_values = np.log10(graph.degree(other_proteins))
+    weight = degree_values/10**min_sp
+    normalized_weight = weight/np.sum(weight)
+
+    fa_proteins = rng.choice(other_proteins, int(module_proteins.shape[0]*added_pct), p=normalized_weight)
+    y_fa[fa_proteins] = 1
+    
+    return y_fa
+
+
+def gapmine2(X, y, beta=1, false_annotations=False, shortest_paths=None, graph=None, random_state=None):
+    """
+    
+    """
+    
+    scorer = make_scorer(fbeta_score, beta=beta, needs_proba=False)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.8, stratify=y, random_state=random_state
+        )
+    
+    if false_annotations:
+
+        if shortest_paths is None:
+            raise ValueError('Array with shortest paths needed to compute false annotations.')
+        
+        elif graph is None:
+            raise ValueError('Graph is needed to compute false annotations.')
+        
+        else:
+            y_train = add_false_annotations(y_train, graph, shortest_paths, random_state=random_state)
+
+    
+    # scale rwr values
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.fit_transform(X_test)
+    
+    ########################### Cross-validation #####################################
+    clf = LogisticRegressionCV(
+        Cs=np.logspace(-4, 4, 15),
+        scoring=scorer,
+        penalty='l1',
+        solver='liblinear',
+        cv=10,
+        n_jobs=None,
+        verbose=0,
+        refit=True,
+        )
+    
+    if not sys.warnoptions:
+        warnings.simplefilter("ignore", category=ConvergenceWarning)
+        warnings.simplefilter("ignore", category=FitFailedWarning)
+        os.environ["PYTHONWARNINGS"] = "ignore"
+        clf.fit(X_train, y_train)
+    
+    ######################## calibrate threshold ##############################################
+
+    threshold = db_calibration(X_train, y_train, clf, beta=beta)
+    
+    ############################### classification results ##############################################
+    
+    y_pred_proba = clf.predict_proba(X_test)[:, 1]
+    y_pred = db_classifier(y_pred_proba, threshold)
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+    
+    clf_results = dict(
+        threshold = threshold,
+        tn = tn, fp = fp, fn = fn, tp = tp,
+        precision = precision_score(y_test, y_pred, zero_division=0),
+        recall = recall_score(y_test, y_pred, zero_division=0),
+        f_beta = fbeta_score(y_test, y_pred, beta=beta),
+        f1 = fbeta_score(y_test, y_pred, beta=1),
+        phi_coef = matthews_corrcoef(y_test, y_pred),
+        p4 = 4*tp*tn/(4*tp*tn+(tp+tn)*(fp+fn)),
+        avg_precision = average_precision_score(y_test, y_pred),
+        precision_at_k = top_k_precision(y_test, y_pred_proba),
+        random_precision = (tp+fn)/(tp+fp+tn+fn)
+    )
+    
+    return clf_results, clf
+
 
 def feature_selection(X, y, max_n_components=10, train_size=0.8, variance_cutoff=0.9, random_state=None):
     """
@@ -54,7 +220,7 @@ def feature_selection(X, y, max_n_components=10, train_size=0.8, variance_cutoff
     return features, n_components, explained_variance
 
 
-#### feature selection with vip scores and explained variance ratio
+######## feature selection with vip scores and explained variance ratio ###################
 def feature_selection(X, y, max_n_components=10, variance_cutoff=0.9):
     """
     Computes feature selection using PLS-DA.

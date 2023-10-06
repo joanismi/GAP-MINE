@@ -3,75 +3,21 @@ from tqdm.notebook import tqdm
 import numpy as np
 import pandas as pd
 
-import sys
 
-from joblib import Parallel, delayed
-
-import os
-import warnings
+import os, sys, warnings
 from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
 np.seterr('ignore')
 
 from sklearn.metrics import confusion_matrix, precision_score, fbeta_score, make_scorer,\
     recall_score, f1_score, matthews_corrcoef, precision_recall_curve, auc, average_precision_score
 
-from sklearn.cross_decomposition import PLSCanonical
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
 from igraph import Graph
-from joblib import Parallel, delayed
 
-
-def whole_clf(data, labels, models, fs, n_fs, threshold):
-    # Predicts whether a protein is associated with a process/disease in the whole dataset using the previously trained model.
-    #
-    # INPUT:
-    #   - dataframe with metrics.
-    #   - dataframe with labels
-    #   - list with trained models.
-    #   - dataframe with VIP scores.
-    #   - list with number of selected modules.
-    #   - list with probability thresholds.
-    #
-    # RETURNS: dataframe with a collection of performance metrics.
-
-    clf_results = []
-    for i in tqdm(range(data.shape[0])):
-        module_fs = fs.iloc[:, i]
-        y_true = labels.iloc[:, i]
-        module_data = data[list(module_fs.sort_values(
-            ascending=False)[:n_fs[i]].index)].transpose()
-        module_threshold = threshold[i]
-        module_model = models[i]
-        module_model.fit(module_data, y_true.values)
-        y_pred = module_model.predict_proba(module_data)[:, 1]
-        y_pred[y_pred < module_threshold] = 0
-        y_pred[y_pred >= module_threshold] = 1
-        true_pred_df = pd.DataFrame({'true': y_true.values, 'pred': y_pred})
-        true_pred_df.index = y_true.index
-        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-
-
-        clf_results.append({
-                    #'module': module,
-                    'f_measure': f1_score(y_true, y_pred, zero_division=0),
-                    'precision': precision_score(y_true, y_pred),
-                    'recall': recall_score(y_true, y_pred),
-                    'mcc': matthews_corrcoef(y_true, y_pred),
-                    'tp': tp,
-                    'fp': fp,
-                    'fn': fn,
-                    'tn': tn,
-                    'new_proteins': list(
-            true_pred_df[(true_pred_df['true'] == 0) & (true_pred_df['pred'] == 1)].index
-            ),
-            })
-
-        
-    return pd.DataFrame(clf_results)
-
-
+from rpy2.robjects import r, numpy2ri, default_converter, IntVector, FactorVector
+from rpy2.robjects.packages import importr
 ########################################### NEW ##########################################################
 def tuckeys_fences(s, fence='upper', k=1.5):
     """
@@ -111,33 +57,51 @@ def tuckeys_fences(s, fence='upper', k=1.5):
     return fence_val
 
 
-def feature_selection(X, y):
+def feature_selection(X, y, module, cv=5):
     """
-    Computes feature selection using PLS-DA.
+    Computes feature selection using OPLS-DA.
     """
 
-    # scale module rwr
-    plsda = PLSCanonical(n_components=1, scale=False).fit(X, y)
+    ropls = importr('ropls')
+    # Create a converter that starts with rpy2's default converter
+    # to which the numpy conversion rules are added.
+    np_cv_rules = default_converter + numpy2ri.converter
 
-    coefs = np.abs(plsda.coef_.flatten())
+    with np_cv_rules.context():
+                
+        oplsda = ropls.opls(
+            X,
+            FactorVector(IntVector(y)),
+            orthoI=r('NA'),
+            predI=1,
+            crossvalI=cv,
+            subset=r('NULL'),
+            fig_pdfC="none",
+            info_txtC="none"
+            )
+        vips = ropls.getVipVn(oplsda)
 
-    threshold = tuckeys_fences(coefs)
+    threshold = tuckeys_fences(vips)
     
     # use 3 distinct feature selection methods
     # 10 most important features
-    top10 = np.sort(np.argsort(coefs)[-10:])
+    top10 = np.sort(np.argsort(vips)[-10:])
 
     # upper outlier features
-    outliers = np.flatnonzero(coefs>=threshold)
+    outliers = np.flatnonzero(vips>=threshold)
     
     # top half of upper outliers features
-    c = coefs[coefs>=threshold]
+    c = vips[vips>=threshold]
     top_outliers = outliers[c >= np.median(c)]
 
-    features = (top10, outliers, top_outliers)
+    features = [top10, outliers, top_outliers]
     
-    return features, coefs
-    
+    for f in range(len(features)):
+        if module not in features[f]:
+            features[f] = np.concatenate((features[f], [5]))
+
+    return features, vips
+
 
 def add_false_annotations(y, graph, sp, added_pct=0.1, random_state=None):
     """
@@ -178,88 +142,15 @@ def add_false_annotations(y, graph, sp, added_pct=0.1, random_state=None):
     return y_fa
 
 
-def gapmine2(X, y, beta=1, false_annotations=False, shortest_paths=None, graph=None, random_state=None):
+def gapmine(X, y, module, train_size=0.8, beta=1, false_annotations=False, shortest_paths=None, graph=None, random_state=None):
     """
     
     """
-    
+    y = y[:, module]
     scorer = make_scorer(fbeta_score, beta=beta, needs_proba=False)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, train_size=0.8, stratify=y, random_state=random_state
-        )
-    
-    if false_annotations:
-
-        if shortest_paths is None:
-            raise ValueError('Array with shortest paths needed to compute false annotations.')
-        
-        elif graph is None:
-            raise ValueError('Graph is needed to compute false annotations.')
-        
-        else:
-            y_train = add_false_annotations(y_train, graph, shortest_paths, random_state=random_state)
-
-    
-    # scale rwr values
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.fit_transform(X_test)
-    
-    ########################### Cross-validation #####################################
-    clf = LogisticRegressionCV(
-        Cs=np.logspace(-4, 4, 15),
-        scoring=scorer,
-        penalty='l1',
-        solver='liblinear',
-        cv=10,
-        n_jobs=None,
-        verbose=0,
-        refit=True,
-        )
-    
-    if not sys.warnoptions:
-        warnings.simplefilter("ignore", category=ConvergenceWarning)
-        warnings.simplefilter("ignore", category=FitFailedWarning)
-        os.environ["PYTHONWARNINGS"] = "ignore"
-        clf.fit(X_train, y_train)
-    
-    ######################## calibrate threshold ##############################################
-
-    threshold = db_calibration(X_train, y_train, clf, beta=beta)
-    
-    ############################### classification results ##############################################
-    
-    y_pred_proba = clf.predict_proba(X_test)[:, 1]
-    y_pred = db_classifier(y_pred_proba, threshold)
-    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
-    
-    clf_results = dict(
-        threshold = threshold,
-        tn = tn, fp = fp, fn = fn, tp = tp,
-        precision = precision_score(y_test, y_pred, zero_division=0),
-        recall = recall_score(y_test, y_pred, zero_division=0),
-        f_beta = fbeta_score(y_test, y_pred, beta=beta),
-        f1 = fbeta_score(y_test, y_pred, beta=1),
-        phi_coef = matthews_corrcoef(y_test, y_pred),
-        p4 = 4*tp*tn/(4*tp*tn+(tp+tn)*(fp+fn)),
-        avg_precision = average_precision_score(y_test, y_pred),
-        precision_at_k = top_k_precision(y_test, y_pred_proba),
-        random_precision = (tp+fn)/(tp+fp+tn+fn)
-    )
-    
-    return clf_results, clf
-
-
-def gapmine(X, y, beta=0.5, false_annotations=False, shortest_paths=None, graph=None, random_state=None):
-    """
-    
-    """
-    
-    scorer = make_scorer(fbeta_score, beta=beta, needs_proba=False)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, train_size=0.8, stratify=y, random_state=random_state
+        X, y, train_size=train_size, stratify=y, random_state=random_state
         )
     
     if false_annotations:
@@ -280,7 +171,7 @@ def gapmine(X, y, beta=0.5, false_annotations=False, shortest_paths=None, graph=
     X_test = scaler.fit_transform(X_test)
     
     # feature selection
-    features, _ = feature_selection(X_train, y_train)
+    features, _ = feature_selection(X_train, y_train, module, cv=5)
     
     ########################### Cross-validation #####################################
     cv_results = {'best_score': 0, 'best_C': 0, 'n_iter': 0, 'n_features': 0, 'fs': 0}
@@ -352,7 +243,6 @@ def gapmine(X, y, beta=0.5, false_annotations=False, shortest_paths=None, graph=
     y_pred = db_classifier(y_pred_proba, threshold)
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
 
-    precision_scores, recall_scores, _ = precision_recall_curve(y_test, y_pred_proba)
     precision_at_k = top_k_precision(y_test, y_pred_proba)
     
     clf_results = dict(
@@ -364,7 +254,7 @@ def gapmine(X, y, beta=0.5, false_annotations=False, shortest_paths=None, graph=
         f1 = fbeta_score(y_test, y_pred, beta=1),
         phi_coef = matthews_corrcoef(y_test, y_pred),
         p4 = 4*tp*tn/(4*tp*tn+(tp+tn)*(fp+fn)),
-        auprc = auc(recall_scores, precision_scores),
+        avg_precision = average_precision_score(y_test, y_pred),
         precision_at_k = precision_at_k,
         random_precision = (tp+fn)/(tp+fp+tn+fn)
     )
@@ -372,7 +262,7 @@ def gapmine(X, y, beta=0.5, false_annotations=False, shortest_paths=None, graph=
     return cv_results, clf_results, best_clf
 
 
-def baseline(X, y, beta=0.5, false_annotations=False, shortest_paths=None, graph=None, random_state=None):
+def baseline(X, y, beta=1, false_annotations=False, shortest_paths=None, graph=None, random_state=None):
     """
     
     """
@@ -482,4 +372,52 @@ def db_classifier(y_pred_proba, threshold, neg_class=0):
     return y_pred
 
 
+##############################TO MODIFY##############################################################################
+def whole_clf(data, labels, models, fs, n_fs, threshold):
+    # Predicts whether a protein is associated with a process/disease in the whole dataset using the previously trained model.
+    #
+    # INPUT:
+    #   - dataframe with metrics.
+    #   - dataframe with labels
+    #   - list with trained models.
+    #   - dataframe with VIP scores.
+    #   - list with number of selected modules.
+    #   - list with probability thresholds.
+    #
+    # RETURNS: dataframe with a collection of performance metrics.
+
+    clf_results = []
+    for i in tqdm(range(data.shape[0])):
+        module_fs = fs.iloc[:, i]
+        y_true = labels.iloc[:, i]
+        module_data = data[list(module_fs.sort_values(
+            ascending=False)[:n_fs[i]].index)].transpose()
+        module_threshold = threshold[i]
+        module_model = models[i]
+        module_model.fit(module_data, y_true.values)
+        y_pred = module_model.predict_proba(module_data)[:, 1]
+        y_pred[y_pred < module_threshold] = 0
+        y_pred[y_pred >= module_threshold] = 1
+        true_pred_df = pd.DataFrame({'true': y_true.values, 'pred': y_pred})
+        true_pred_df.index = y_true.index
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+
+
+        clf_results.append({
+                    #'module': module,
+                    'f_measure': f1_score(y_true, y_pred, zero_division=0),
+                    'precision': precision_score(y_true, y_pred),
+                    'recall': recall_score(y_true, y_pred),
+                    'mcc': matthews_corrcoef(y_true, y_pred),
+                    'tp': tp,
+                    'fp': fp,
+                    'fn': fn,
+                    'tn': tn,
+                    'new_proteins': list(
+            true_pred_df[(true_pred_df['true'] == 0) & (true_pred_df['pred'] == 1)].index
+            ),
+            })
+
+        
+    return pd.DataFrame(clf_results)
 
