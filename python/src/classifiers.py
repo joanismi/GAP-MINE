@@ -13,6 +13,7 @@ from sklearn.metrics import confusion_matrix, precision_score, fbeta_score, make
 
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
 from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
 
 from igraph import Graph
 
@@ -85,7 +86,7 @@ def feature_selection(X, y, module, cv=5, scale=False):
             )
         vips = ropls.getVipVn(oplsda)
    
-    #assert vips.shape[0]>0, f"Model {module} did not converge!"
+    assert vips.shape[0]>0, f"Model {module} did not converge!"
     
     features = []
     for k in [10, 25, 50]:
@@ -137,16 +138,16 @@ def add_false_annotations(y, graph, sp, added_pct=0.1, random_state=None):
     return y_fa
 
 
-def gapmine(X, y, module, train_size=0.8, beta=1, false_annotations=False, shortest_paths=None, graph=None, random_state=None):
+def gapmine(X, y, module, train_size=0.8, beta=1, oversample=False,
+            false_annotations=False, shortest_paths=None, graph=None, random_state=None):
     """
     
     """
     
-    y = y[:, module]
-    scorer = make_scorer(fbeta_score, beta=beta, needs_proba=False)
+    scorer = "average_precision" #make_scorer(fbeta_score, beta=beta, needs_proba=False)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, train_size=train_size, stratify=y, random_state=random_state
+        X, y[:, module], train_size=train_size, stratify=y, random_state=random_state
         )
     
     if false_annotations:
@@ -160,6 +161,9 @@ def gapmine(X, y, module, train_size=0.8, beta=1, false_annotations=False, short
         else:
             y_train = add_false_annotations(y_train, graph, shortest_paths, random_state=random_state)
 
+    if oversample:
+        sm = SMOTE(sampling_strategy=oversample, random_state=random_state)
+        X_train, y_train = sm.fit_resample(X_train, y_train)
     
     # scale rwr values
     scaler = StandardScaler()
@@ -231,8 +235,8 @@ def gapmine(X, y, module, train_size=0.8, beta=1, false_annotations=False, short
 
     ######################## calibrate threshold ##############################################
 
-    threshold = db_calibration(X_train_best, y_train, best_clf, beta=beta)
-    
+    threshold = db_calibration(X_train_best, y_train, best_clf, beta=beta, cv=5)
+
     ############################### classification results ##############################################
     
     y_pred_proba = best_clf.predict_proba(X_test_best)[:, 1]
@@ -250,7 +254,7 @@ def gapmine(X, y, module, train_size=0.8, beta=1, false_annotations=False, short
         f1 = fbeta_score(y_test, y_pred, beta=1),
         phi_coef = matthews_corrcoef(y_test, y_pred),
         p4 = 4*tp*tn/(4*tp*tn+(tp+tn)*(fp+fn)),
-        avg_precision = average_precision_score(y_test, y_pred),
+        avg_precision = average_precision_score(y_test, y_pred_proba),
         precision_at_k = precision_at_k,
         random_precision = (tp+fn)/(tp+fp+tn+fn)
     )
@@ -319,11 +323,11 @@ def compute_db(y_test, y_pred_proba, beta=1):
     return threshold
     
     
-def db_calibration(X, y, clf, beta=1):
+def db_calibration(X, y, clf, beta=1, cv=5):
     """
     Calibrates the decision boundary of a logistic regression classifier using cross-validation.
     """
-    skf = StratifiedKFold(n_splits=10)
+    skf = StratifiedKFold(n_splits=cv)
     split = skf.split(X, y)
 
     thresholds = []
