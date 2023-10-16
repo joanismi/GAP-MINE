@@ -12,8 +12,8 @@ from sklearn.metrics import confusion_matrix, precision_score, fbeta_score, make
     recall_score, f1_score, matthews_corrcoef, precision_recall_curve, auc, average_precision_score
 
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from imblearn.over_sampling import SMOTE
+from sklearn.preprocessing import StandardScaler, RobustScaler
+from imblearn.combine import SMOTEENN
 
 from igraph import Graph
 
@@ -60,7 +60,7 @@ def tuckeys_fences(s, fence='upper', k=1.5):
     return fence_val
 
 
-def feature_selection(X, y, module, cv=5, scale=False):
+def feature_selection(X, y, module, cv=5):
     """
     Computes feature selection using OPLS-DA.
     """
@@ -86,16 +86,18 @@ def feature_selection(X, y, module, cv=5, scale=False):
             )
         vips = ropls.getVipVn(oplsda)
    
-    assert vips.shape[0]>0, f"Model {module} did not converge!"
-    
-    features = []
-    for k in [10, 25, 50]:
-        top_k = np.sort(np.argsort(vips)[-k:])
-        if module not in top_k:
-            top_k = np.concatenate((top_k, [module]))
-        
-        features.append(top_k)
-        
+    #assert vips.shape[0]>0, f"Model {module} did not converge!"
+    if vips.shape[0]==0:
+        features = []
+    else:
+        features = []
+        for k in [10, 25, 50]:
+            top_k = np.sort(np.argsort(vips)[-k:])
+            if module not in top_k:
+                top_k = np.concatenate((top_k, [module]))
+            
+            features.append(top_k)
+            
     return features, vips
 
 
@@ -122,13 +124,13 @@ def add_false_annotations(y, graph, sp, added_pct=0.1, random_state=None):
     """
     rng = np.random.default_rng(random_state)
     y_fa = y.copy()
-
     module_proteins = np.flatnonzero(y_fa == 1)
-    other_proteins = np.logical_not(module_proteins)
+    other_proteins = np.flatnonzero(y_fa == 0)
 
     min_sp = np.min(sp[np.ix_(other_proteins, module_proteins)], axis=1)
 
     degree_values = np.log10(graph.degree(other_proteins))
+
     weight = degree_values/10**min_sp
     normalized_weight = weight/np.sum(weight)
 
@@ -147,7 +149,7 @@ def gapmine(X, y, module, train_size=0.8, beta=1, oversample=False,
     scorer = "average_precision" #make_scorer(fbeta_score, beta=beta, needs_proba=False)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y[:, module], train_size=train_size, stratify=y, random_state=random_state
+        X, y[:, module], train_size=train_size, stratify=y[:, module], random_state=random_state
         )
     
     if false_annotations:
@@ -162,103 +164,109 @@ def gapmine(X, y, module, train_size=0.8, beta=1, oversample=False,
             y_train = add_false_annotations(y_train, graph, shortest_paths, random_state=random_state)
 
     if oversample:
-        sm = SMOTE(sampling_strategy=oversample, random_state=random_state)
+        sm = SMOTEENN(sampling_strategy=oversample, random_state=random_state)
         X_train, y_train = sm.fit_resample(X_train, y_train)
     
-    # scale rwr values
-    scaler = StandardScaler()
+    # scale rwr values.
+    scaler = RobustScaler()
     X_train = scaler.fit_transform(X_train)
-    X_test = scaler.fit_transform(X_test)
+    X_test = scaler.transform(X_test)
     
     # feature selection
     features, _ = feature_selection(X_train, y_train, module, cv=5)
+    if not features:
+        cv_results = {k: np.nan for k in ['best_score', 'best_C', 'n_iter', 'n_features', 'fs']}
+        clf_results = {k: np.nan for k in ["threshold", "tn", "fp", "fn", "tp", "precision", "recall",
+                                           "f_beta", "f1", "phi_coef", "p4", "avg_precision", "precision_at_k", "random_precision"]}
+        best_clf = np.nan
+        
+    else:
+        ########################### Cross-validation #####################################
+        cv_results = {'best_score': 0, 'best_C': 0, 'n_iter': 0, 'n_features': 0, 'fs': 0}
+        for fs in features:
+
+            n_features = len(fs)
     
-    ########################### Cross-validation #####################################
-    cv_results = {'best_score': 0, 'best_C': 0, 'n_iter': 0, 'n_features': 0, 'fs': 0}
-    for fs in features:
+            X_train_fs = X_train[:, fs]
+            X_test_fs = X_test[:, fs]
         
-        n_features = len(fs)
-
-        X_train_fs = X_train[:, fs]
-        X_test_fs = X_test[:, fs]
-    
-        clf = LogisticRegressionCV(
-            Cs=np.logspace(-4, 4, 15),
-            scoring=scorer,
-            penalty='l2',
-            solver='lbfgs',
-            cv=10,
-            n_jobs=None,
-            verbose=0,
-            refit=True,
-            )
-        
-        if not sys.warnoptions:
-            warnings.simplefilter("ignore", category=ConvergenceWarning)
-            warnings.simplefilter("ignore", category=FitFailedWarning)
-            os.environ["PYTHONWARNINGS"] = "ignore"
-            clf.fit(X_train_fs, y_train)
-
-        mean_scores = np.mean(clf.scores_[1.0], axis=0)
-        mean_iter = np.mean(clf.n_iter_[0], axis=0)
-        
-        best_index = np.argmax(mean_scores)
-        best_score = np.amax(mean_scores)
-        best_C = clf.C_[0]
-        n_iter = mean_iter[best_index]
-                    
-        # choose fs that generates the best model
-        if best_score > cv_results['best_score']:
-
-            cv_results['best_score'] = best_score
-            cv_results['best_C'] = best_C
-            cv_results['n_iter'] = n_iter
-            cv_results['n_features'] = n_features
-            cv_results['fs'] = fs
-            best_clf = clf
-            X_train_best = X_train_fs
-            X_test_best = X_test_fs
-
-        # if cv results are identical, choose the model 
-        # with fewer predictors
-        elif (best_score == cv_results['best_score']) & (n_features < cv_results['n_features']):
+            clf = LogisticRegressionCV(
+                Cs=np.logspace(-4, 4, 15),
+                scoring=scorer,
+                penalty='l2',
+                solver='lbfgs',
+                cv=10,
+                n_jobs=None,
+                verbose=0,
+                refit=True,
+                )
             
-            cv_results['best_score'] = best_score
-            cv_results['best_C'] = best_C
-            cv_results['n_iter'] = n_iter
-            cv_results['n_features'] = n_features
-            cv_results['fs'] = fs
-            best_clf = clf
-            X_train_best = X_train_fs
-            X_test_best = X_test_fs
-
-
-    ######################## calibrate threshold ##############################################
-
-    threshold = db_calibration(X_train_best, y_train, best_clf, beta=beta, cv=5)
-
-    ############################### classification results ##############################################
+            if not sys.warnoptions:
+                warnings.simplefilter("ignore", category=ConvergenceWarning)
+                warnings.simplefilter("ignore", category=FitFailedWarning)
+                os.environ["PYTHONWARNINGS"] = "ignore"
+                clf.fit(X_train_fs, y_train)
     
-    y_pred_proba = best_clf.predict_proba(X_test_best)[:, 1]
-    y_pred = db_classifier(y_pred_proba, threshold)
-    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
-
-    precision_at_k = top_k_precision(y_test, y_pred_proba)
+            mean_scores = np.mean(clf.scores_[1.0], axis=0)
+            mean_iter = np.mean(clf.n_iter_[0], axis=0)
+            
+            best_index = np.argmax(mean_scores)
+            best_score = np.amax(mean_scores)
+            best_C = clf.C_[0]
+            n_iter = mean_iter[best_index]
+                        
+            # choose fs that generates the best model
+            if best_score > cv_results['best_score']:
     
-    clf_results = dict(
-        threshold = threshold,
-        tn = tn, fp = fp, fn = fn, tp = tp,
-        precision = precision_score(y_test, y_pred, zero_division=0),
-        recall = recall_score(y_test, y_pred, zero_division=0),
-        f_beta = fbeta_score(y_test, y_pred, beta=beta),
-        f1 = fbeta_score(y_test, y_pred, beta=1),
-        phi_coef = matthews_corrcoef(y_test, y_pred),
-        p4 = 4*tp*tn/(4*tp*tn+(tp+tn)*(fp+fn)),
-        avg_precision = average_precision_score(y_test, y_pred_proba),
-        precision_at_k = precision_at_k,
-        random_precision = (tp+fn)/(tp+fp+tn+fn)
-    )
+                cv_results['best_score'] = best_score
+                cv_results['best_C'] = best_C
+                cv_results['n_iter'] = n_iter
+                cv_results['n_features'] = n_features
+                cv_results['fs'] = fs
+                best_clf = clf
+                X_train_best = X_train_fs
+                X_test_best = X_test_fs
     
+            # if cv results are identical, choose the model 
+            # with fewer predictors
+            elif (best_score == cv_results['best_score']) & (n_features < cv_results['n_features']):
+                
+                cv_results['best_score'] = best_score
+                cv_results['best_C'] = best_C
+                cv_results['n_iter'] = n_iter
+                cv_results['n_features'] = n_features
+                cv_results['fs'] = fs
+                best_clf = clf
+                X_train_best = X_train_fs
+                X_test_best = X_test_fs
+    
+    
+        ######################## calibrate threshold ##############################################
+    
+        threshold = db_calibration(X_train_best, y_train, best_clf, beta=beta, cv=5)
+    
+        ############################### classification results ##############################################
+        
+        y_pred_proba = best_clf.predict_proba(X_test_best)[:, 1]
+        y_pred = db_classifier(y_pred_proba, threshold)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+    
+        precision_at_k = top_k_precision(y_test, y_pred_proba)
+        
+        clf_results = dict(
+            threshold = threshold,
+            tn = tn, fp = fp, fn = fn, tp = tp,
+            precision = precision_score(y_test, y_pred, zero_division=0),
+            recall = recall_score(y_test, y_pred, zero_division=0),
+            f_beta = fbeta_score(y_test, y_pred, beta=beta),
+            f1 = fbeta_score(y_test, y_pred, beta=1),
+            phi_coef = matthews_corrcoef(y_test, y_pred),
+            p4 = 4*tp*tn/(4*tp*tn+(tp+tn)*(fp+fn)),
+            avg_precision = average_precision_score(y_test, y_pred_proba),
+            precision_at_k = precision_at_k,
+            random_precision = (tp+fn)/(tp+fp+tn+fn)
+        )
+        
     return cv_results, clf_results, best_clf
 
 
